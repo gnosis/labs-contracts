@@ -16,23 +16,24 @@ contract OmenThumbnailMapping {
         return marketAddressToIPFSHash[marketAddress];
     }
 
-    function set(address marketAddress, bytes32 image_hash) public {
+    function set(
+        address marketAddress,
+        bytes32 image_hash
+    ) public requireThatSenderCanChangeImage(marketAddress) {
         // Update IPFS hash of thumbnail for the given market.
-        requireThatSenderCanChangeImage(marketAddress);
         marketAddressToIPFSHash[marketAddress] = image_hash;
         marketAddressToLatestImageChanger[marketAddress] = msg.sender;
     }
 
-    function remove(address marketAddress) public {
+    function remove(
+        address marketAddress
+    ) public requireThatSenderCanChangeImage(marketAddress) {
         // Remove IPFS hash of thumbnail for the given market.
-        requireThatSenderCanChangeImage(marketAddress);
         delete marketAddressToIPFSHash[marketAddress];
         marketAddressToLatestImageChanger[marketAddress] = msg.sender;
     }
 
-    function requireThatSenderCanChangeImage(
-        address marketAddress
-    ) public view {
+    modifier requireThatSenderCanChangeImage(address marketAddress) {
         // Verify that sender is allowed to update IPFS hash for the given market.
         IERC20 market = IERC20(marketAddress);
         uint256 fundedBySender = market.balanceOf(msg.sender);
@@ -50,5 +51,7 @@ contract OmenThumbnailMapping {
                 fundedBySender >= 2 * fundedByLatestImageChanger,
             "Sender don't have at least double the shares than the latest person who updated the image and the sender isn't the latest person who updated it."
         );
+
+        _;
     }
 }
