@@ -39,7 +39,7 @@ contract OmenThumbnailMapping {
         require(
             latestImageChanger == address(0) || latestImageChanger == msg.sender
                 || fundedBySender >= 2 * fundedByLatestImageChanger,
-            "Sender don't have at least double the shares than the latest person who updated the image and the sender isn't the latest person who updated it."
+            "Sender doesn't have at least double the shares than the latest person who updated the image and the sender isn't the latest person who updated it."
         );
 
         _;
