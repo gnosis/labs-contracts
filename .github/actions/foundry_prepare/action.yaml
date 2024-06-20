@@ -8,4 +8,3 @@ runs:
     - name: Run Forge build
       shell: bash
       run: forge build
-  
