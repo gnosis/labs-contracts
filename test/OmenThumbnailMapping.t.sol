@@ -12,9 +12,7 @@ contract FixedProductMarketMaker is IERC20 {
         balances[account] = balance;
     }
 
-    function balanceOf(
-        address account
-    ) external view override returns (uint256) {
+    function balanceOf(address account) external view override returns (uint256) {
         return balances[account];
     }
 }
@@ -34,40 +32,24 @@ contract OmenThumbnailMappingTest is Test {
         omenThumbnailMapping.set(address(productMarketMaker), "Qm123");
     }
 
-    function testCanUpdateImageWithAnyFundsInMarketIfThisIsFirstUpdater()
-        public
-    {
+    function testCanUpdateImageWithAnyFundsInMarketIfThisIsFirstUpdater() public {
         productMarketMaker.setBalance(address(this), 1);
         omenThumbnailMapping.set(address(productMarketMaker), "Qm123");
-        assertEq(
-            omenThumbnailMapping.get(address(productMarketMaker)),
-            "Qm123"
-        );
+        assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm123");
     }
 
-    function testCanUpdateImageWithAnyFundsInMarketIfThisIsTheSamePersonAsTheOneWhoChangedTheImageLastTime()
-        public
-    {
+    function testCanUpdateImageWithAnyFundsInMarketIfThisIsTheSamePersonAsTheOneWhoChangedTheImageLastTime() public {
         productMarketMaker.setBalance(address(this), 1);
         omenThumbnailMapping.set(address(productMarketMaker), "Qm123");
-        assertEq(
-            omenThumbnailMapping.get(address(productMarketMaker)),
-            "Qm123"
-        );
+        assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm123");
         omenThumbnailMapping.set(address(productMarketMaker), "Qm456");
-        assertEq(
-            omenThumbnailMapping.get(address(productMarketMaker)),
-            "Qm456"
-        );
+        assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm456");
     }
 
     function testAnotherUserCanNotUpdateWithoutDoubleTheFunds() public {
         productMarketMaker.setBalance(address(this), 1);
         omenThumbnailMapping.set(address(productMarketMaker), "Qm123");
-        assertEq(
-            omenThumbnailMapping.get(address(productMarketMaker)),
-            "Qm123"
-        );
+        assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm123");
 
         address anotherUser = address(0x123);
         productMarketMaker.setBalance(anotherUser, 1);
@@ -79,18 +61,12 @@ contract OmenThumbnailMappingTest is Test {
     function testAnotherUserCaUpdateWithDoubleTheFunds() public {
         productMarketMaker.setBalance(address(this), 1);
         omenThumbnailMapping.set(address(productMarketMaker), "Qm123");
-        assertEq(
-            omenThumbnailMapping.get(address(productMarketMaker)),
-            "Qm123"
-        );
+        assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm123");
 
         address anotherUser = address(0x123);
         productMarketMaker.setBalance(anotherUser, 2);
         vm.prank(anotherUser);
         omenThumbnailMapping.set(address(productMarketMaker), "Qm456");
-        assertEq(
-            omenThumbnailMapping.get(address(productMarketMaker)),
-            "Qm456"
-        );
+        assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm456");
     }
 }
