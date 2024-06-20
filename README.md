@@ -1,19 +1,20 @@
-## Foundry
+# Gnosis Labs Contracts
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Repository holding the contracts made by Gnosis Labs team.
 
-Foundry consists of:
+## Implemented contracts
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+### Omen ThumbnailMapping
 
-## Documentation
+Contract used to store prediction market's address to IPFS hash of an image displayed on Omen 2.0
 
-https://book.getfoundry.sh/
+## Set up
 
-## Usage
+The repository uses [Foundry](https://book.getfoundry.sh/).
+
+### Installation
+
+See installation instructions on https://book.getfoundry.sh/getting-started/installation.
 
 ### Build
 
@@ -48,7 +49,7 @@ $ anvil
 ### Deploy
 
 ```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+$ forge script script/OmenThumbnailMapping.s.sol:OmenThumbnailMappingScript --rpc-url <your_rpc_url> --private-key <your_private_key>
 ```
 
 ### Cast
