@@ -52,6 +52,10 @@ anvil
 forge script script/OmenThumbnailMapping.s.sol:OmenThumbnailMappingScript --rpc-url <your_rpc_url> --private-key <your_private_key>
 ```
 
+- Gnosis Network ID: 100
+- Gnosis Chiado RPC: https://rpc.chiadochain.net
+- Gnosis Chain RPC: https://gnosis-rpc.publicnode.com
+
 ### Cast
 
 ```shell
