@@ -1,0 +1,13 @@
+name: "Prepare Foundry environment"
+description: "Set up Foundry and build the project"
+runs:
+  using: "composite"
+  steps:
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+    - name: Run Forge build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+  
