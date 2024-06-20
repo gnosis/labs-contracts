@@ -49,7 +49,7 @@ anvil
 ### Deploy
 
 ```shell
-forge script script/OmenThumbnailMapping.s.sol:OmenThumbnailMappingScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+forge create --rpc-url <your_rpc_url>  --private-key <your_private_key> src/OmenThumbnailMapping.sol:OmenThumbnailMapping
 ```
 
 - Gnosis Network ID: 100
