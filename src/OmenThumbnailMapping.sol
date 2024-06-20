@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-interface IERC20 {
-    // Omen's FixedProductMarketMaker contract inherits from IERC20: https://gnosisscan.io/address/0x9083a2b699c0a4ad06f63580bde2635d26a3eef0#code.
-    function balanceOf(address account) external view returns (uint256);
-}
+import {IERC20} from "../interfaces/IERC20.sol";
 
 contract OmenThumbnailMapping {
     // Mapping from market's address to image's IPFS hash
@@ -30,6 +27,7 @@ contract OmenThumbnailMapping {
 
     modifier requireThatSenderCanChangeImage(address marketAddress) {
         // Verify that sender is allowed to update IPFS hash for the given market.
+        // Omen's FixedProductMarketMaker contract inherits from IERC20: https://gnosisscan.io/address/0x9083a2b699c0a4ad06f63580bde2635d26a3eef0#code.
         IERC20 market = IERC20(marketAddress);
         uint256 fundedBySender = market.balanceOf(msg.sender);
         require(fundedBySender > 0, "Sender has no shares in the market.");
