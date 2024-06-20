@@ -8,15 +8,15 @@ interface IERC20 {
 
 contract OmenThumbnailMapping {
     // Mapping from market's address to image's IPFS hash
-    mapping(address => string) private marketAddressToIPFSHash;
+    mapping(address => bytes32) private marketAddressToIPFSHash;
     mapping(address => address) private marketAddressToLatestImageChanger;
 
-    function get(address marketAddress) public view returns (string memory) {
+    function get(address marketAddress) public view returns (bytes32) {
         // Get IPFS hash of thumbnail for the given market.
         return marketAddressToIPFSHash[marketAddress];
     }
 
-    function set(address marketAddress, string memory image_hash) public {
+    function set(address marketAddress, bytes32 image_hash) public {
         // Update IPFS hash of thumbnail for the given market.
         requireThatSenderCanChangeImage(marketAddress);
         marketAddressToIPFSHash[marketAddress] = image_hash;
