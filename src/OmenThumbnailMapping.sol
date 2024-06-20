@@ -9,18 +9,18 @@ contract OmenThumbnailMapping {
     mapping(address => address) private marketAddressToLatestImageChanger;
 
     /// @dev Get IPFS hash of thumbnail for the given market.
-    function get(address marketAddress) public view returns (bytes32) {
+    function get(address marketAddress) external view returns (bytes32) {
         return marketAddressToIPFSHash[marketAddress];
     }
 
     /// @dev Update IPFS hash of thumbnail for the given market.
-    function set(address marketAddress, bytes32 image_hash) public requireThatSenderCanChangeImage(marketAddress) {
+    function set(address marketAddress, bytes32 image_hash) external requireThatSenderCanChangeImage(marketAddress) {
         marketAddressToIPFSHash[marketAddress] = image_hash;
         marketAddressToLatestImageChanger[marketAddress] = msg.sender;
     }
 
     /// @dev Remove IPFS hash of thumbnail for the given market.
-    function remove(address marketAddress) public requireThatSenderCanChangeImage(marketAddress) {
+    function remove(address marketAddress) external requireThatSenderCanChangeImage(marketAddress) {
         delete marketAddressToIPFSHash[marketAddress];
         marketAddressToLatestImageChanger[marketAddress] = msg.sender;
     }
