@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
 interface IERC20 {
@@ -16,13 +16,18 @@ contract OmenThumbnailMapping {
         return marketAddressToIPFSHash[marketAddress];
     }
 
-    function set(address marketAddress, bytes32 image_hash) public requireThatSenderCanChangeImage(marketAddress) {
+    function set(
+        address marketAddress,
+        bytes32 image_hash
+    ) public requireThatSenderCanChangeImage(marketAddress) {
         // Update IPFS hash of thumbnail for the given market.
         marketAddressToIPFSHash[marketAddress] = image_hash;
         marketAddressToLatestImageChanger[marketAddress] = msg.sender;
     }
 
-    function remove(address marketAddress) public requireThatSenderCanChangeImage(marketAddress) {
+    function remove(
+        address marketAddress
+    ) public requireThatSenderCanChangeImage(marketAddress) {
         // Remove IPFS hash of thumbnail for the given market.
         delete marketAddressToIPFSHash[marketAddress];
         marketAddressToLatestImageChanger[marketAddress] = msg.sender;
@@ -34,11 +39,16 @@ contract OmenThumbnailMapping {
         uint256 fundedBySender = market.balanceOf(msg.sender);
         require(fundedBySender > 0, "Sender has no shares in the market.");
 
-        address latestImageChanger = marketAddressToLatestImageChanger[marketAddress];
-        uint256 fundedByLatestImageChanger = market.balanceOf(latestImageChanger);
+        address latestImageChanger = marketAddressToLatestImageChanger[
+            marketAddress
+        ];
+        uint256 fundedByLatestImageChanger = market.balanceOf(
+            latestImageChanger
+        );
         require(
-            latestImageChanger == address(0) || latestImageChanger == msg.sender
-                || fundedBySender >= 2 * fundedByLatestImageChanger,
+            latestImageChanger == address(0) ||
+                latestImageChanger == msg.sender ||
+                fundedBySender >= 2 * fundedByLatestImageChanger,
             "Sender don't have at least double the shares than the latest person who updated the image and the sender isn't the latest person who updated it."
         );
 
