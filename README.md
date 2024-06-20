@@ -49,12 +49,11 @@ anvil
 ### Deploy
 
 ```shell
-forge create --rpc-url <your_rpc_url>  --private-key <your_private_key> src/OmenThumbnailMapping.sol:OmenThumbnailMapping
+forge create --gas-limit 10000000 --rpc-url <your_rpc_url>  --private-key <your_private_key> OmenThumbnailMapping
 ```
 
-- Gnosis Network ID: 100
-- Gnosis Chiado RPC: https://rpc.chiadochain.net
-- Gnosis Chain RPC: https://gnosis-rpc.publicnode.com
+- Gnosis Chiado RPC: https://rpc.chiadochain.net (chain id `10200`)
+- Gnosis Chain RPC: https://gnosis-rpc.publicnode.com (chain id `100`)
 
 ### Cast
 
