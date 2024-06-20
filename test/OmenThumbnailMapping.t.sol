@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {OmenThumbnailMapping, IFixedProductMarketMaker} from "../src/OmenThumbnailMapping.sol";
+import {OmenThumbnailMapping, IERC20} from "../src/OmenThumbnailMapping.sol";
 
-contract FixedProductMarketMaker is IFixedProductMarketMaker {
+contract FixedProductMarketMaker is IERC20 {
     // Mocked product maker that allows us to easily change balances (liquidity provided by the user).
     mapping(address => uint256) private balances;
 
