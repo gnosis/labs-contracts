@@ -49,7 +49,7 @@ anvil
 ### Deploy
 
 ```shell
-forge create --gas-limit 10000000 --rpc-url <your_rpc_url>  --private-key <your_private_key> OmenThumbnailMapping
+ETHERSCAN_API_KEY=<your_api_key> forge create --verify --gas-limit 10000000 --rpc-url <your_rpc_url>  --private-key <your_private_key> OmenThumbnailMapping
 ```
 
 - Gnosis Chiado RPC: https://rpc.chiadochain.net (chain id `10200`)
