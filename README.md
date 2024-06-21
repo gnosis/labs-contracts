@@ -48,12 +48,31 @@ anvil
 
 ### Deploy
 
+#### On Anvil
+
+Start Anvil with
+
 ```shell
-ETHERSCAN_API_KEY=<your_api_key> forge create --verify --gas-limit 10000000 --rpc-url <your_rpc_url>  --private-key <your_private_key> OmenThumbnailMapping
+anvil
 ```
 
-- Gnosis Chiado RPC: https://rpc.chiadochain.net (chain id `10200`)
-- Gnosis Chain RPC: https://gnosis-rpc.publicnode.com (chain id `100`)
+and run
+
+```shell
+forge create --rpc-url 127.0.0.1:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 OmenThumbnailMapping
+```
+
+#### On TestNet
+
+```shell
+forge create --gas-limit 10000000 --rpc-url https://rpc.chiadochain.net  --private-key <your_private_key> OmenThumbnailMapping
+```
+
+#### On MainNet
+
+```shell
+ETHERSCAN_API_KEY=<your_api_key> forge create --verify --verifier-url api.gnosisscan.io --rpc-url https://gnosis-rpc.publicnode.com --private-key <your_private_key> OmenThumbnailMapping
+```
 
 ### Cast
 
