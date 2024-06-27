@@ -5,24 +5,31 @@ import {IERC20} from "../lib/openzeppelin-contracts/contracts/interfaces/IERC20.
 
 /// @dev Mapping from market's address to image's IPFS hash
 contract OmenThumbnailMapping {
+    event ImageUpdated(address indexed marketAddress, bytes32 image_hash, address indexed changer);
+
     mapping(address => bytes32) private marketAddressToIPFSHash;
     mapping(address => address) private marketAddressToLatestImageChanger;
 
     /// @dev Get IPFS hash of thumbnail for the given market.
-    function get(address marketAddress) external view returns (bytes32) {
+    function get(address marketAddress) public view returns (bytes32) {
         return marketAddressToIPFSHash[marketAddress];
     }
 
     /// @dev Update IPFS hash of thumbnail for the given market.
-    function set(address marketAddress, bytes32 image_hash) external requireThatSenderCanChangeImage(marketAddress) {
+    function set(address marketAddress, bytes32 image_hash) public requireThatSenderCanChangeImage(marketAddress) {
         marketAddressToIPFSHash[marketAddress] = image_hash;
         marketAddressToLatestImageChanger[marketAddress] = msg.sender;
+        emit ImageUpdated(marketAddress, image_hash, msg.sender);
     }
 
     /// @dev Remove IPFS hash of thumbnail for the given market.
-    function remove(address marketAddress) external requireThatSenderCanChangeImage(marketAddress) {
-        delete marketAddressToIPFSHash[marketAddress];
-        marketAddressToLatestImageChanger[marketAddress] = msg.sender;
+    function remove(address marketAddress) public requireThatSenderCanChangeImage(marketAddress) {
+        set(marketAddress, bytes32(0));
+    }
+
+    /// @dev Get the address of the latest person who updated the image for the given market.
+    function getLatestImageChanger(address marketAddress) public view returns (address) {
+        return marketAddressToLatestImageChanger[marketAddress];
     }
 
     /// @dev Verify that sender is allowed to update IPFS hash for the given market.

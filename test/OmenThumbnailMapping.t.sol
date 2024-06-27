@@ -56,4 +56,16 @@ contract OmenThumbnailMappingTest is Test {
         omenThumbnailMapping.set(address(productMarketMaker), "Qm456");
         assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm456");
     }
+
+    function testNonSetImageIsEqualToNullBytes32() public {
+        assertEq(omenThumbnailMapping.get(address(productMarketMaker)), bytes32(0));
+    }
+
+    function testImageIsNullBytesAfterRemovalAndChangerIsUpdatedCorrectly() public {
+        productMarketMaker.mint(address(this), 1);
+        omenThumbnailMapping.set(address(productMarketMaker), "Qm123");
+        omenThumbnailMapping.remove(address(productMarketMaker));
+        assertEq(omenThumbnailMapping.get(address(productMarketMaker)), bytes32(0));
+        assertEq(omenThumbnailMapping.getLatestImageChanger(address(productMarketMaker)), address(this));
+    }
 }
