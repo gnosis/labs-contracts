@@ -10,6 +10,15 @@
   },
   {
     "type": "function",
+    "name": "getLatestImageChanger",
+    "inputs": [
+      { "name": "marketAddress", "type": "address", "internalType": "address" }
+    ],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "remove",
     "inputs": [
       { "name": "marketAddress", "type": "address", "internalType": "address" }
@@ -26,25 +35,6 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
-  },
-  {
-    "type": "event",
-    "name": "ImageRemoved",
-    "inputs": [
-      {
-        "name": "marketAddress",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "changer",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
   },
   {
     "type": "event",
