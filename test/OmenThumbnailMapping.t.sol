@@ -64,8 +64,15 @@ contract OmenThumbnailMappingTest is Test {
     function testImageIsNullBytesAfterRemovalAndChangerIsUpdatedCorrectly() public {
         productMarketMaker.mint(address(this), 1);
         omenThumbnailMapping.set(address(productMarketMaker), "Qm123");
+        assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm123");
+        assertEq(omenThumbnailMapping.getLatestImageChanger(address(productMarketMaker)), address(this));
+
+        address anotherUser = address(0x123);
+        productMarketMaker.mint(anotherUser, 2);
+        vm.prank(anotherUser);
+
         omenThumbnailMapping.remove(address(productMarketMaker));
         assertEq(omenThumbnailMapping.get(address(productMarketMaker)), bytes32(0));
-        assertEq(omenThumbnailMapping.getLatestImageChanger(address(productMarketMaker)), address(this));
+        assertEq(omenThumbnailMapping.getLatestImageChanger(address(productMarketMaker)), anotherUser);
     }
 }
