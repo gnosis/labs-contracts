@@ -44,7 +44,7 @@ def main(
 
         if new_image is None and old_image is not None:
             logger.info(
-                f"Copying image mapping for market {market.market_maker_contract_address_checksummed} from {old_image} to {new_image}"
+                f"Copying image mapping for market {market.market_maker_contract_address_checksummed} image {old_image} from {old_image_contract.address} to {new_image_contract.address}"
             )
             new_image_contract.set(
                 keys, market.market_maker_contract_address_checksummed, old_image
