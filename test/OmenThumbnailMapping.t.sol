@@ -21,6 +21,8 @@ contract OmenThumbnailMappingTest is Test {
 
     function testCanUpdateImageWithAnyFundsInMarketIfThisIsFirstUpdater() public {
         productMarketMaker.mint(address(this), 1);
+        vm.expectEmit(true, true, true, true);
+        emit OmenThumbnailMapping.ImageUpdated(address(productMarketMaker), "Qm123", address(this));
         omenThumbnailMapping.set(address(productMarketMaker), "Qm123");
         assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm123");
     }
@@ -63,12 +65,16 @@ contract OmenThumbnailMappingTest is Test {
 
     function testImageIsNullBytesAfterRemovalAndChangerIsUpdatedCorrectly() public {
         productMarketMaker.mint(address(this), 1);
+        vm.expectEmit(true, true, true, true);
+        emit OmenThumbnailMapping.ImageUpdated(address(productMarketMaker), "Qm123", address(this));
         omenThumbnailMapping.set(address(productMarketMaker), "Qm123");
         assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm123");
         assertEq(omenThumbnailMapping.getLatestImageChanger(address(productMarketMaker)), address(this));
 
         address anotherUser = address(0x123);
         productMarketMaker.mint(anotherUser, 2);
+        vm.expectEmit(true, true, true, true);
+        emit OmenThumbnailMapping.ImageUpdated(address(productMarketMaker), bytes32(0), anotherUser);
         vm.prank(anotherUser);
 
         omenThumbnailMapping.remove(address(productMarketMaker));
