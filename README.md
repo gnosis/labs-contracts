@@ -4,6 +4,11 @@ Repository holding the contracts made by Gnosis Labs team.
 
 ## Implemented contracts
 
+| Contract Name             | Description                                           | Mainnet Address                           |
+|----------------------------|-------------------------------------------------------|-------------------------------------------|
+| OmenThumbnailMapping     | Manages IPFS hashes for market thumbnails on Omen 2.0 | [0xe0cf08311F03850497B0ed6A2cf067f1750C3eFc](https://gnosisscan.io/address/0xe0cf08311f03850497b0ed6a2cf067f1750c3efc#code)   |
+
+
 ### Omen ThumbnailMapping
 
 Contract used to store prediction market's address to IPFS hash of an image displayed on Omen 2.0
