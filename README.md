@@ -71,7 +71,7 @@ forge create --gas-limit 10000000 --rpc-url https://rpc.chiadochain.net  --priva
 #### On MainNet
 
 ```shell
-ETHERSCAN_API_KEY=<your_api_key> forge create --verify --verifier-url api.gnosisscan.io --rpc-url https://gnosis-rpc.publicnode.com --private-key <your_private_key> OmenThumbnailMapping
+ETHERSCAN_API_KEY=<your_api_key> forge create --verify --verifier-url https://api.gnosisscan.io/api --rpc-url https://gnosis-rpc.publicnode.com --private-key <your_private_key> OmenThumbnailMapping
 ```
 
 ### Cast
