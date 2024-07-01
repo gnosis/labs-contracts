@@ -105,6 +105,8 @@ Then open directory of one of the graphs and run `npm install`.
 
 ### Build, test, deploy
 
+Before working with graphs, you need to run `forge build` in the root directory.
+
 - `omen-thumbnailmapping` - see `graphs/omen-thumbnailmapping/package.json`
 
 The sequence of commands is `codegen -> build -> test -> deploy`.

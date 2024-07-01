@@ -3,7 +3,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "codegen": "graph codegen",
-    "build": "graph build",
+    "build": "mkdir -p ./../../abi && jq '.abi' ./../../out/OmenThumbnailMapping.sol/OmenThumbnailMapping.json > ./../../abi/omen_thumbnailmapping.abi.json && graph build",
     "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ omen-thumbnailmapping",
     "create-local": "graph create --node http://localhost:8020/ omen-thumbnailmapping",
     "remove-local": "graph remove --node http://localhost:8020/ omen-thumbnailmapping",
@@ -14,5 +14,7 @@
     "@graphprotocol/graph-cli": "0.77.0",
     "@graphprotocol/graph-ts": "0.32.0"
   },
-  "devDependencies": { "matchstick-as": "0.5.0" }
+  "devDependencies": {
+    "matchstick-as": "0.5.0"
+  }
 }
