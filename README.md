@@ -101,8 +101,12 @@ Graphs uses [The Graph](https://thegraph.com/docs).
 
 See installation instructions on https://thegraph.com/docs/en/developing/creating-a-subgraph/#install-the-graph-cli.
 
+Then open directory of one of the graphs and run `npm install`.
+
 ### Build, test, deploy
 
 - `omen-thumbnailmapping` - see `graphs/omen-thumbnailmapping/package.json`
+
+The sequence of commands is `codegen -> build -> test -> deploy`.
 
 (On MacOS Sonoma, running the tests in the docker mode is required: https://github.com/LimeChain/matchstick/issues/421)
