@@ -17,6 +17,9 @@ runs:
       shell: bash
       run: npm install
       working-directory: ${{ inputs.working_directory }}
+    - name: Testtest
+      shell: bash
+      run: ls -l 
     - name: Generate and build graph
       shell: bash
       run: npm run codegen && npn run build
