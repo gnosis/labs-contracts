@@ -20,9 +20,11 @@ runs:
     - name: Testtest
       shell: bash
       run: mkdir -p abi && jq '.abi' ./../../out/OmenThumbnailMapping.sol/OmenThumbnailMapping.json > abi/omen_thumbnailmapping.abi.json
+      working-directory: ${{ inputs.working_directory }}
     - name: Testtest2
       shell: bash
       run: cat abi/omen_thumbnailmapping.abi.json
+      working-directory: ${{ inputs.working_directory }}
     - name: Generate and build graph
       shell: bash
       run: npm run codegen && npn run build
