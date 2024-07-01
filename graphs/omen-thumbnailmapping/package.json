@@ -2,8 +2,8 @@
   "name": "omen-thumbnailmapping",
   "license": "UNLICENSED",
   "scripts": {
-    "codegen": "graph codegen",
-    "build": "mkdir -p abi && jq '.abi' ./../../out/OmenThumbnailMapping.sol/OmenThumbnailMapping.json > abi/omen_thumbnailmapping.abi.json && graph build",
+    "codegen": "mkdir -p abi && jq '.abi' ./../../out/OmenThumbnailMapping.sol/OmenThumbnailMapping.json > abi/omen_thumbnailmapping.abi.json && graph codegen",
+    "build": "graph build",
     "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ omen-thumbnailmapping",
     "create-local": "graph create --node http://localhost:8020/ omen-thumbnailmapping",
     "remove-local": "graph remove --node http://localhost:8020/ omen-thumbnailmapping",
