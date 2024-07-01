@@ -19,5 +19,5 @@ runs:
       working-directory: ${{ inputs.working_directory }}
     - name: Generate and build graph
       shell: bash
-      run: graph codegen && graph build
+      run: npm run codegen && npn run build
       working-directory: ${{ inputs.working_directory }}
