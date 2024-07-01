@@ -19,7 +19,7 @@ dataSources:
         - ImageUpdated
       abis:
         - name: Contract
-          file: ./abis/Contract.json
+          file: ./../../abi/omen_thumbnailmapping.abi.json
       eventHandlers:
         - event: ImageUpdated(indexed address,bytes32,indexed address)
           handler: handleImageUpdated
