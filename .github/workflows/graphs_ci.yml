@@ -14,9 +14,7 @@ jobs:
         working-directory: [./graphs/omen-thumbnailmapping]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 21
+     - uses: ./.github/actions/graph_prepare
       - name: Run graph tests for ${{ matrix.working-directory }}
         run: graph test -l -f
         working-directory: ${{ matrix.working-directory }}

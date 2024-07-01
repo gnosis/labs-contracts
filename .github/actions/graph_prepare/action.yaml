@@ -1,0 +1,12 @@
+name: "Prepare Graph environment"
+description: "Set up Graph"
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 21
+    - name: Install Graph CLI
+      shell: bash
+      run: npm install -g @graphprotocol/graph-cli
+
