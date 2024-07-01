@@ -15,6 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/graph_prepare
+        with:
+          working_directory: ${{ matrix.working-directory }}
       - name: Run graph tests for ${{ matrix.working-directory }}
         run: graph test -l -f
         working-directory: ${{ matrix.working-directory }}
