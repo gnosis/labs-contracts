@@ -61,6 +61,9 @@ export class OmenThumbnailMapping extends Entity {
 
   set marketAddress(value: Bytes) {
     this.set("marketAddress", Value.fromBytes(value));
+    // We need to set ID like this (even though it's accessed via marketAddress anyway), because the ID is required by the Entity class 
+    // and it checks for it. However in our case, the ID and marketAddress is the same thing.
+    this.set("id", Value.fromBytes(value));
   }
 
   get image_hash(): Bytes {

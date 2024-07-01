@@ -13,12 +13,6 @@ export function createImageUpdatedEvent(
 
   imageUpdatedEvent.parameters.push(
     new ethereum.EventParam(
-      "id",
-      ethereum.Value.fromAddress(marketAddress) // id is the marketAddress
-    )
-  )
-  imageUpdatedEvent.parameters.push(
-    new ethereum.EventParam(
       "marketAddress",
       ethereum.Value.fromAddress(marketAddress)
     )
