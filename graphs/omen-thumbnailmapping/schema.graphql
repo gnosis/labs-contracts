@@ -1,0 +1,6 @@
+type OmenThumbnailMapping @entity {
+  id: Bytes! # same as marketAddress
+  marketAddress: Bytes! # address
+  image_hash: Bytes! # bytes32
+  changer: Bytes! # address
+}

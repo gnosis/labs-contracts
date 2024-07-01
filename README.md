@@ -4,16 +4,16 @@ Repository holding the contracts made by Gnosis Labs team.
 
 ## Implemented contracts
 
-| Contract Name             | Description                                           | Mainnet Address                           |
-|----------------------------|-------------------------------------------------------|-------------------------------------------|
-| OmenThumbnailMapping     | Manages IPFS hashes for market thumbnails on Omen 2.0 | [0xe0cf08311F03850497B0ed6A2cf067f1750C3eFc](https://gnosisscan.io/address/0xe0cf08311f03850497b0ed6a2cf067f1750c3efc#code)   |
+| Contract Name             | Description                                           | Mainnet Address                           | TheGraph |
+|----------------------------|-------------------------------------------------------|-------------------------------------------||-------------------------------------------|
+| OmenThumbnailMapping     | Manages IPFS hashes for market thumbnails on Omen 2.0 | [0xe0cf08311F03850497B0ed6A2cf067f1750C3eFc](https://gnosisscan.io/address/0xe0cf08311f03850497b0ed6a2cf067f1750c3efc#code)   | [omen-thumbnailmapping](https://thegraph.com/studio/subgraph/omen-thumbnailmapping/) |
 
 
 ### Omen ThumbnailMapping
 
 Contract used to store prediction market's address to IPFS hash of an image displayed on Omen 2.0
 
-## Set up
+## Set up contracts development
 
 The repository uses [Foundry](https://book.getfoundry.sh/).
 
@@ -92,3 +92,23 @@ forge --help
 anvil --help
 cast --help
 ```
+
+## Set up graph development
+
+Graphs uses [The Graph](https://thegraph.com/docs).
+
+### Installation
+
+See installation instructions on https://thegraph.com/docs/en/developing/creating-a-subgraph/#install-the-graph-cli.
+
+Then open directory of one of the graphs and run `npm install`.
+
+### Build, test, deploy
+
+Before working with graphs, you need to run `forge build` in the root directory.
+
+- `omen-thumbnailmapping` - see `graphs/omen-thumbnailmapping/package.json`
+
+The sequence of commands is `codegen -> build -> test -> deploy`.
+
+(On MacOS Sonoma, running the tests in the docker mode is required: https://github.com/LimeChain/matchstick/issues/421)

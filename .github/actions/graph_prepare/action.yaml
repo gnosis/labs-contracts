@@ -1,0 +1,23 @@
+name: "Prepare Graph environment"
+description: "Set up Graph"
+inputs:
+  working_directory:
+    description: "The working directory to run the commands in"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 21
+    - name: Install Graph CLI
+      shell: bash
+      run: npm install -g @graphprotocol/graph-cli
+    - name: Install NPM modules
+      shell: bash
+      run: npm install
+      working-directory: ${{ inputs.working_directory }}
+    - name: Generate and build graph
+      shell: bash
+      run: npm run codegen && npm run build
+      working-directory: ${{ inputs.working_directory }}
