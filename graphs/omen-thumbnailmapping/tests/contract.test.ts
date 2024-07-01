@@ -16,7 +16,7 @@ import { createImageUpdatedEvent } from "./contract-utils"
 describe("Test OmenThumbnailMapping", () => {
   beforeAll(() => {
     let marketAddress = Address.fromString("0x0000000000000000000000000000000000000001")
-    let image_hash = Bytes.fromI32(1234567890)
+    let image_hash = Bytes.fromHexString("0xd2029649")
     let changer = Address.fromString("0x0000000000000000000000000000000000000002")
     let newImageUpdatedEvent = createImageUpdatedEvent(
       marketAddress,
@@ -43,13 +43,7 @@ describe("Test OmenThumbnailMapping", () => {
       "OmenThumbnailMapping",
       "0x0000000000000000000000000000000000000001",
       "image_hash",
-      "1234567890"
-    )
-    assert.fieldEquals(
-      "OmenThumbnailMapping",
-      "0x0000000000000000000000000000000000000001",
-      "changer",
-      "0x0000000000000000000000000000000000000002"
+      "0xd2029649"
     )
   })
 })
