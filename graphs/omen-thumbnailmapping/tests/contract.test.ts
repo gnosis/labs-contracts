@@ -36,6 +36,12 @@ describe("Test OmenThumbnailMapping", () => {
     assert.fieldEquals(
       "OmenThumbnailMapping",
       "0x0000000000000000000000000000000000000001",
+      "id",
+      "0x0000000000000000000000000000000000000001"
+    )
+    assert.fieldEquals(
+      "OmenThumbnailMapping",
+      "0x0000000000000000000000000000000000000001",
       "marketAddress",
       "0x0000000000000000000000000000000000000001"
     )
@@ -44,6 +50,12 @@ describe("Test OmenThumbnailMapping", () => {
       "0x0000000000000000000000000000000000000001",
       "image_hash",
       "0xd2029649"
+    )
+    assert.fieldEquals(
+      "OmenThumbnailMapping",
+      "0x0000000000000000000000000000000000000001",
+      "changer",
+      "0x0000000000000000000000000000000000000002"
     )
   })
 })

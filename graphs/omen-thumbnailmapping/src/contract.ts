@@ -10,6 +10,7 @@ export function handleImageUpdated(event: ImageUpdated): void {
 
   mapping.marketAddress = event.params.marketAddress
   mapping.image_hash = event.params.image_hash
+  mapping.changer = event.params.changer
 
   mapping.save()
 }

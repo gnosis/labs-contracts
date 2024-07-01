@@ -15,9 +15,11 @@ export class OmenThumbnailMapping extends Entity {
   save(): void {
     let marketAddress = this.get("marketAddress");
     let image_hash = this.get("image_hash");
+    let changer = this.get("changer");
     assert(marketAddress != null, "Cannot save OmenThumbnailMapping entity without an marketAddress");
     assert(image_hash != null, "Cannot save OmenThumbnailMapping entity without an image_hash");
-    if (marketAddress && image_hash) {
+    assert(changer != null, "Cannot save OmenThumbnailMapping entity without an changer");
+    if (marketAddress && image_hash && changer) {
       assert(
         marketAddress.kind == ValueKind.BYTES,
         `Entities of type OmenThumbnailMapping must have an marketAddress of type Bytes but the marketAddress '${marketAddress.displayData()}' is of type ${marketAddress.displayKind()}`,
@@ -25,6 +27,10 @@ export class OmenThumbnailMapping extends Entity {
       assert(
         image_hash.kind == ValueKind.BYTES,
         `Entities of type OmenThumbnailMapping must have an image_hash of type Bytes but the image_hash '${image_hash.displayData()}' is of type ${image_hash.displayKind()}`,
+      );
+      assert(
+        changer.kind == ValueKind.BYTES,
+        `Entities of type OmenThumbnailMapping must have an changer of type Bytes but the changer '${changer.displayData()}' is of type ${changer.displayKind()}`,
       );
       store.set("OmenThumbnailMapping", marketAddress.toBytes().toHexString(), this);
     }
@@ -77,5 +83,18 @@ export class OmenThumbnailMapping extends Entity {
 
   set image_hash(value: Bytes) {
     this.set("image_hash", Value.fromBytes(value));
+  }
+
+  get changer(): Bytes {
+    let value = this.get("changer");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBytes();
+    }
+  }
+
+  set changer(value: Bytes) {
+    this.set("changer", Value.fromBytes(value));
   }
 }
