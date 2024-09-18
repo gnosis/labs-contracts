@@ -6,7 +6,7 @@ import {Prediction} from "./structs.sol";
 /// This contract allows for mapping market addresses to IPFS hashes containing agent results.
 contract OmenAgentResultMapping {
     event AgentResultAdded(
-        address indexed marketAddress, bytes32 indexed ipfsHash, address indexed publisherAddress, bytes32 txHash
+        address indexed marketAddress, bytes32 ipfsHash, address indexed publisherAddress, bytes32 txHash
     );
 
     // Mapping of a market address to an array of IPFS hashes (bytes32).

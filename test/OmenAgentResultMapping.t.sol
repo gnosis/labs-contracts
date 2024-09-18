@@ -7,7 +7,7 @@ import {Prediction} from "../src/structs.sol";
 
 contract OmenAgentResultMappingTest is Test {
     event AgentResultAdded(
-        address indexed marketAddress, bytes32 indexed ipfsHash, address indexed publisherAddress, bytes32 txHash
+        address indexed marketAddress, bytes32 ipfsHash, address indexed publisherAddress, bytes32 txHash
     );
 
     OmenAgentResultMapping public omenAgentResultMapping;
@@ -62,7 +62,7 @@ contract OmenAgentResultMappingTest is Test {
         // ToDo - Add Use for Prediction
         Prediction memory prediction = buildPrediction("test-input1");
 
-        vm.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, false, true);
         vm.startPrank(publisher);
         emit AgentResultAdded(marketAddress, prediction.ipfsHash, prediction.publisherAddress, prediction.txHash);
         omenAgentResultMapping.addPrediction(marketAddress, prediction);
