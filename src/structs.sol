@@ -5,4 +5,5 @@ struct Prediction {
     address publisherAddress;
     bytes32 ipfsHash;
     bytes32 txHash;
+    uint16 estimatedProbabilityBps; // in basis points, 0-10000
 }

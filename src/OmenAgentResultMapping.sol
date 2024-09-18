@@ -6,10 +6,14 @@ import {Prediction} from "./structs.sol";
 /// This contract allows for mapping market addresses to IPFS hashes containing agent results.
 contract OmenAgentResultMapping {
     event AgentResultAdded(
-        address indexed marketAddress, bytes32 ipfsHash, address indexed publisherAddress, bytes32 txHash
+        address indexed marketAddress,
+        uint16 estimatedProbabilityBps,
+        address indexed publisherAddress,
+        bytes32 txHash,
+        bytes32 ipfsHash
     );
 
-    // Mapping of a market address to an array of Prediction structs.
+    // Mapping of a market address to an array of IPFS hashes (bytes32).
     mapping(address => Prediction[]) private marketToPredictions;
 
     // We set the deployer as the default admin.
@@ -23,7 +27,9 @@ contract OmenAgentResultMapping {
     function addPrediction(address marketAddress, Prediction memory prediction) public {
         require(address(msg.sender) == address(prediction.publisherAddress), "Only publisher can add an IPFS hash");
         marketToPredictions[marketAddress].push(prediction);
-        emit AgentResultAdded(marketAddress, prediction.ipfsHash, msg.sender, prediction.txHash);
+        emit AgentResultAdded(
+            marketAddress, prediction.estimatedProbabilityBps, msg.sender, prediction.txHash, prediction.ipfsHash
+        );
     }
 
     function getPredictionByIndex(address marketAddress, uint256 index) public view returns (Prediction memory) {

@@ -7,7 +7,11 @@ import {Prediction} from "../src/structs.sol";
 
 contract OmenAgentResultMappingTest is Test {
     event AgentResultAdded(
-        address indexed marketAddress, bytes32 ipfsHash, address indexed publisherAddress, bytes32 txHash
+        address indexed marketAddress,
+        uint16 estimatedProbabilityBps,
+        address indexed publisherAddress,
+        bytes32 txHash,
+        bytes32 ipfsHash
     );
 
     OmenAgentResultMapping public omenAgentResultMapping;
@@ -26,7 +30,8 @@ contract OmenAgentResultMappingTest is Test {
         // Convert the input string to a bytes32 IPFS hash
         bytes32 ipfsHash = keccak256(abi.encodePacked(input));
         bytes32 dummyTxHash = keccak256(abi.encodePacked("dummy transaction hash"));
-        Prediction memory prediction = Prediction(publisher, ipfsHash, dummyTxHash);
+        uint16 estimatedProbabilityBps = 6556; //65.56%
+        Prediction memory prediction = Prediction(publisher, ipfsHash, dummyTxHash, estimatedProbabilityBps);
         return prediction;
     }
 
@@ -64,7 +69,13 @@ contract OmenAgentResultMappingTest is Test {
 
         vm.expectEmit(true, true, false, true);
         vm.startPrank(publisher);
-        emit AgentResultAdded(marketAddress, prediction.ipfsHash, prediction.publisherAddress, prediction.txHash);
+        emit AgentResultAdded(
+            marketAddress,
+            prediction.estimatedProbabilityBps,
+            prediction.publisherAddress,
+            prediction.txHash,
+            prediction.ipfsHash
+        );
         omenAgentResultMapping.addPrediction(marketAddress, prediction);
         vm.stopPrank();
     }
