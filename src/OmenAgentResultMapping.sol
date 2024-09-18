@@ -12,7 +12,6 @@ contract OmenAgentResultMapping {
     // Mapping of a market address to an array of Prediction structs.
     mapping(address => Prediction[]) private marketToIPFSHashes;
 
-    // We set the deployer as the default admin.
     constructor() {}
 
     function getHashes(address marketAddress) public view returns (Prediction[] memory) {
