@@ -38,13 +38,13 @@ contract OmenAgentResultMappingTest is Test {
         return prediction.ipfsHash;
     }
 
-    function testAddAndGetHashes() public {
+    function testAddAndGetPredictions() public {
         // Add a mock prediction and capture the IPFS hash
         bytes32 expectedHash1 = addMockPrediction("test-input1");
         bytes32 expectedHash2 = addMockPrediction("test-input2");
 
         // Retrieve the list of IPFS hashes for the sender's address
-        Prediction[] memory predictions = omenAgentResultMapping.getHashes(address(this));
+        Prediction[] memory predictions = omenAgentResultMapping.getPredictions(address(this));
         assertEq(predictions[0].ipfsHash, expectedHash1);
         assertEq(predictions[1].ipfsHash, expectedHash2);
     }
@@ -74,9 +74,9 @@ contract OmenAgentResultMappingTest is Test {
         bytes32 hash2 = addMockPrediction("test-string-2");
         bytes32 hash3 = addMockPrediction("test-string-3");
 
-        Prediction memory prediction1 = omenAgentResultMapping.getHashByIndex(marketAddress, 0);
-        Prediction memory prediction2 = omenAgentResultMapping.getHashByIndex(marketAddress, 1);
-        Prediction memory prediction3 = omenAgentResultMapping.getHashByIndex(marketAddress, 2);
+        Prediction memory prediction1 = omenAgentResultMapping.getPredictionByIndex(marketAddress, 0);
+        Prediction memory prediction2 = omenAgentResultMapping.getPredictionByIndex(marketAddress, 1);
+        Prediction memory prediction3 = omenAgentResultMapping.getPredictionByIndex(marketAddress, 2);
 
         assertEq(prediction1.ipfsHash, hash1);
         assertEq(prediction2.ipfsHash, hash2);
@@ -84,6 +84,6 @@ contract OmenAgentResultMappingTest is Test {
 
         // Expect a revert when trying to access an out-of-bounds index
         vm.expectRevert();
-        omenAgentResultMapping.getHashByIndex(publisher, 3); // Out of bounds
+        omenAgentResultMapping.getPredictionByIndex(publisher, 3); // Out of bounds
     }
 }
