@@ -9,7 +9,7 @@ contract OmenAgentResultMapping {
         address indexed marketAddress, bytes32 ipfsHash, address indexed publisherAddress, bytes32 txHash
     );
 
-    // Mapping of a market address to an array of IPFS hashes (bytes32).
+    // Mapping of a market address to an array of Prediction structs.
     mapping(address => Prediction[]) private marketToPredictions;
 
     // We set the deployer as the default admin.
