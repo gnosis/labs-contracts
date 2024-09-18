@@ -6,7 +6,7 @@ import {OmenAgentResultMapping} from "../src/OmenAgentResultMapping.sol";
 import {Prediction} from "../src/structs.sol";
 
 contract OmenAgentResultMappingTest is Test {
-    event AgentResultAdded(
+    event PredictionAdded(
         address indexed marketAddress,
         uint16 estimatedProbabilityBps,
         address indexed publisherAddress,
@@ -18,11 +18,10 @@ contract OmenAgentResultMappingTest is Test {
     address publisher;
     address marketAddress;
 
-    /// @notice Deploys a new instance of the OmenAgentResultMapping contract before each test.
     function setUp() public {
         omenAgentResultMapping = new OmenAgentResultMapping();
         publisher = vm.addr(1);
-
+        // We mock the market address value as being the address of this test contract.
         marketAddress = address(this);
     }
 
@@ -35,7 +34,6 @@ contract OmenAgentResultMappingTest is Test {
         return prediction;
     }
 
-    /// @notice Helper function to add a mock IPFS hash based on a given input string.
     function addMockPrediction(string memory input) internal returns (bytes32) {
         Prediction memory prediction = buildPrediction(input);
         vm.prank(publisher);
@@ -48,7 +46,6 @@ contract OmenAgentResultMappingTest is Test {
         bytes32 expectedHash1 = addMockPrediction("test-input1");
         bytes32 expectedHash2 = addMockPrediction("test-input2");
 
-        // Retrieve the list of IPFS hashes for the sender's address
         Prediction[] memory predictions = omenAgentResultMapping.getPredictions(address(this));
         assertEq(predictions[0].ipfsHash, expectedHash1);
         assertEq(predictions[1].ipfsHash, expectedHash2);
@@ -64,12 +61,11 @@ contract OmenAgentResultMappingTest is Test {
     }
 
     function testAddPredictionEmitsEvent() public {
-        // ToDo - Add Use for Prediction
         Prediction memory prediction = buildPrediction("test-input1");
 
         vm.expectEmit(true, true, false, true);
         vm.startPrank(publisher);
-        emit AgentResultAdded(
+        emit PredictionAdded(
             marketAddress,
             prediction.estimatedProbabilityBps,
             prediction.publisherAddress,
