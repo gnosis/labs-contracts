@@ -1,0 +1,26 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Contract
+    network: http://localhost:8545
+    source:
+      address: "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9"
+      abi: Contract
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - PredictionAdded
+      abis:
+        - name: Contract
+          file: ./abis/Contract.json
+      eventHandlers:
+        - event: PredictionAdded(indexed address,uint16,indexed address,bytes32,bytes32)
+          handler: handlePredictionAdded
+      file: ./src/contract.ts

@@ -2,5 +2,8 @@
   "solidity.packageDefaultDependenciesContractsDirectory": "src",
   "solidity.packageDefaultDependenciesDirectory": "lib",
   "solidity.formatter": "forge",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "solidity.remappings": [
+    "forge-std/=lib/forge-std/src/",
+  ]
 }

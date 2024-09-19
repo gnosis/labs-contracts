@@ -1,0 +1,5 @@
+OmenThumbnailMappingTest:testAnotherUserCaUpdateWithDoubleTheFunds() (gas: 114286)
+OmenThumbnailMappingTest:testAnotherUserCanNotUpdateWithoutDoubleTheFunds() (gas: 112800)
+OmenThumbnailMappingTest:testCanNotUpdateImageWithoutProvidedLiquidity() (gas: 17194)
+OmenThumbnailMappingTest:testCanUpdateImageWithAnyFundsInMarketIfThisIsFirstUpdater() (gas: 85673)
+OmenThumbnailMappingTest:testCanUpdateImageWithAnyFundsInMarketIfThisIsTheSamePersonAsTheOneWhoChangedTheImageLastTime() (gas: 90805)
