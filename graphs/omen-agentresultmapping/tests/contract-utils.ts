@@ -1,6 +1,6 @@
 import { newMockEvent } from "matchstick-as"
 import { ethereum, Address, Bytes } from "@graphprotocol/graph-ts"
-import { PredictionAdded } from "../generated/OmenAgentResultMapping/OmenAgentResultMapping"
+import { PredictionAdded } from "../generated/Contract/Contract"
 
 export function createPredictionAddedEvent(
   marketAddress: Address,

@@ -1,4 +1,4 @@
-import { PredictionAdded as PredictionAddedEvent } from "../generated/OmenAgentResultMapping/OmenAgentResultMapping"
+import { PredictionAdded as PredictionAddedEvent } from "../generated/Contract/Contract"
 import { PredictionAdded } from "../generated/schema"
 
 export function handlePredictionAdded(event: PredictionAddedEvent): void {

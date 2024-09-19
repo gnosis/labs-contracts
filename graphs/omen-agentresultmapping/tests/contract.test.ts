@@ -8,9 +8,9 @@ import {
 } from "matchstick-as/assembly/index"
 import { Address, Bytes } from "@graphprotocol/graph-ts"
 import { PredictionAdded } from "../generated/schema"
-import { PredictionAdded as PredictionAddedEvent } from "../generated/OmenAgentResultMapping/OmenAgentResultMapping"
-import { handlePredictionAdded } from "../src/omen-agent-result-mapping"
-import { createPredictionAddedEvent } from "./omen-agent-result-mapping-utils"
+import { PredictionAdded as PredictionAddedEvent } from "../generated/Contract/Contract"
+import { handlePredictionAdded } from "../src/contract"
+import { createPredictionAddedEvent } from "./contract-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0

@@ -1,7 +1,7 @@
 {
-  "https://gnosis-rpc.publicnode.com": {
-    "OmenAgentResultMapping": {
-      "address": "0xbe1F6944496923683ca849fc0cC93fD10523cB83",
+  "http://localhost:8545": {
+    "Contract": {
+      "address": "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
       "startBlock": 0
     }
   }

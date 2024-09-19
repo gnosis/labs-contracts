@@ -5,11 +5,11 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: OmenAgentResultMapping
-    network: https://gnosis-rpc.publicnode.com
+    name: Contract
+    network: http://localhost:8545
     source:
-      address: "0xbe1F6944496923683ca849fc0cC93fD10523cB83"
-      abi: OmenAgentResultMapping
+      address: "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9"
+      abi: Contract
       startBlock: 0
     mapping:
       kind: ethereum/events
@@ -18,9 +18,9 @@ dataSources:
       entities:
         - PredictionAdded
       abis:
-        - name: OmenAgentResultMapping
-          file: ./abis/OmenAgentResultMapping.json
+        - name: Contract
+          file: ./abis/Contract.json
       eventHandlers:
         - event: PredictionAdded(indexed address,uint16,indexed address,bytes32,bytes32)
           handler: handlePredictionAdded
-      file: ./src/omen-agent-result-mapping.ts
+      file: ./src/contract.ts

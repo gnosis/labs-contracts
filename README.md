@@ -121,14 +121,3 @@ Before working with graphs, you need to run `forge build` in the root directory.
 The sequence of commands is `codegen -> build -> test -> deploy`.
 
 (On MacOS Sonoma, running the tests in the docker mode is required: https://github.com/LimeChain/matchstick/issues/421)
-
-
-#####
-# next steps graph
-Next steps:
-
-  1. Run `graph auth` to authenticate with your deploy key.
-
-  2. Type `cd omen-agentresultmapping` to enter the subgraph.
-
-  3. Run `yarn deploy` to deploy the subgraph.
