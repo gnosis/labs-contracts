@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: OmenAgentResultMapping
-    network: https://gnosis-rpc.publicnode.com
+    network: gnosis
     source:
       address: "0xbe1F6944496923683ca849fc0cC93fD10523cB83"
       abi: OmenAgentResultMapping
-      startBlock: 0
+      startBlock: 36085528
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
