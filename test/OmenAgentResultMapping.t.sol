@@ -6,14 +6,6 @@ import {OmenAgentResultMapping} from "../src/OmenAgentResultMapping.sol";
 import {Prediction} from "../src/structs.sol";
 
 contract OmenAgentResultMappingTest is Test {
-    event PredictionAdded(
-        address indexed marketAddress,
-        uint16 estimatedProbabilityBps,
-        address indexed publisherAddress,
-        bytes32 txHash,
-        bytes32 ipfsHash
-    );
-
     OmenAgentResultMapping public omenAgentResultMapping;
     address publisher;
     address marketAddress;
@@ -65,7 +57,7 @@ contract OmenAgentResultMappingTest is Test {
 
         vm.expectEmit(true, true, false, true);
         vm.startPrank(publisher);
-        emit PredictionAdded(
+        emit OmenAgentResultMapping.PredictionAdded(
             marketAddress,
             prediction.estimatedProbabilityBps,
             prediction.publisherAddress,
