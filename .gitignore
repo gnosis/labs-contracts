@@ -4,6 +4,7 @@ out/
 abi/
 
 .idea/
+.gas-snapshot
 
 # Ignores development broadcast logs
 !/broadcast
