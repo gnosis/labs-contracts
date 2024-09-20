@@ -3,6 +3,8 @@ cache/
 out/
 abi/
 
+.idea/
+
 # Ignores development broadcast logs
 !/broadcast
 /broadcast/*/31337/
