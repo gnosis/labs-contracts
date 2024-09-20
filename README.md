@@ -7,12 +7,8 @@ Repository holding the contracts made by Gnosis Labs team.
 | Contract Name             | Description                                           | Mainnet Address                           | TheGraph |
 |----------------------------|-------------------------------------------------------|-------------------------------------------||-------------------------------------------|
 | OmenThumbnailMapping     | Manages IPFS hashes for market thumbnails on Omen 2.0 | [0xe0cf08311F03850497B0ed6A2cf067f1750C3eFc](https://gnosisscan.io/address/0xe0cf08311f03850497b0ed6a2cf067f1750c3efc#code)   | [omen-thumbnailmapping](https://thegraph.com/studio/subgraph/omen-thumbnailmapping/) |
-| OmenAgentResultMapping     | Maps prediction results to markets Omen 2.0 | [0xbe1F6944496923683ca849fc0cC93fD10523cB83](https://gnosisscan.io/address/0xbe1F6944496923683ca849fc0cC93fD10523cB83#code)   | [omen-agentresultmapping](https://thegraph.com/studio/subgraph/omen-agentresultmapping/) |
+| OmenAgentResultMapping     | Maps prediction results to markets on Omen 2.0 | [0xbe1F6944496923683ca849fc0cC93fD10523cB83](https://gnosisscan.io/address/0xbe1F6944496923683ca849fc0cC93fD10523cB83#code)   | [omen-agentresultmapping](https://thegraph.com/studio/subgraph/omen-agentresultmapping/) |
 
-
-### Omen ThumbnailMapping
-
-Contract used to store prediction market's address to IPFS hash of an image displayed on Omen 2.0
 
 ## Set up contracts development
 
@@ -122,14 +118,3 @@ Before working with graphs, you need to run `forge build` in the root directory.
 The sequence of commands is `codegen -> build -> test -> deploy`.
 
 (On MacOS Sonoma, running the tests in the docker mode is required: https://github.com/LimeChain/matchstick/issues/421)
-
-
-#####
-# next steps graph
-Next steps:
-
-  1. Run `graph auth` to authenticate with your deploy key.
-
-  2. Type `cd omen-agentresultmapping` to enter the subgraph.
-
-  3. Run `yarn deploy` to deploy the subgraph.
