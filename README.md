@@ -79,6 +79,15 @@ forge create --gas-limit 10000000 --rpc-url https://rpc.chiadochain.net  --priva
 ETHERSCAN_API_KEY=<your_api_key> forge create --verify --verifier-url https://api.gnosisscan.io/api --rpc-url https://gnosis-rpc.publicnode.com --private-key <your_private_key> OmenThumbnailMapping
 ```
 
+#### (Optional) Deploy on a Tenderly testnet
+forge create OmenAgentResultMapping \
+--private-key <private_key> \ 
+--rpc-url <tenderly_rpc_url>  \
+--etherscan-api-key <tenderly-access-token> \
+--verify \
+--verifier-url <tenderly_roc_url>/verify/etherscan
+
+
 ### Cast
 
 ```shell
