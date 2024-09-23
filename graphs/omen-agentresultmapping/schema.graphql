@@ -1,0 +1,11 @@
+type PredictionAdded @entity(immutable: true) {
+  id: Bytes!
+  marketAddress: Bytes! # address
+  estimatedProbabilityBps: Int! # uint16
+  publisherAddress: Bytes! # address
+  txHash: Bytes! # bytes32
+  ipfsHash: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
