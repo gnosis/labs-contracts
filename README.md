@@ -8,6 +8,7 @@ Repository holding the contracts made by Gnosis Labs team.
 |----------------------------|-------------------------------------------------------|-------------------------------------------||-------------------------------------------|
 | OmenThumbnailMapping     | Manages IPFS hashes for market thumbnails on Omen 2.0 | [0xe0cf08311F03850497B0ed6A2cf067f1750C3eFc](https://gnosisscan.io/address/0xe0cf08311f03850497b0ed6a2cf067f1750c3efc#code)   | [omen-thumbnailmapping](https://thegraph.com/studio/subgraph/omen-thumbnailmapping/) |
 | OmenAgentResultMapping     | Maps prediction results to markets on Omen 2.0 | [0xbe1F6944496923683ca849fc0cC93fD10523cB83](https://gnosisscan.io/address/0xbe1F6944496923683ca849fc0cC93fD10523cB83#code)   | [omen-agentresultmapping](https://thegraph.com/studio/subgraph/omen-agentresultmapping/) |
+| DebuggingContract     | Add whatever function you need here to test out | [0x5Aa82E068aE6a6a1C26c42E5a59520a74Cdb8998](https://gnosisscan.io/address/0x5Aa82E068aE6a6a1C26c42E5a59520a74Cdb8998#code)   | none |
 
 
 ## Set up contracts development
