@@ -8,9 +8,9 @@ dataSources:
     name: OmenAgentResultMapping
     network: gnosis
     source:
-      address: "0xbe1F6944496923683ca849fc0cC93fD10523cB83"
+      address: "0x260E1077dEA98e738324A6cEfB0EE9A272eD471a"
       abi: OmenAgentResultMapping
-      startBlock: 36085528
+      startBlock: 36267341
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -21,6 +21,6 @@ dataSources:
         - name: OmenAgentResultMapping
           file: ./abis/OmenAgentResultMapping.json
       eventHandlers:
-        - event: PredictionAdded(indexed address,uint16,indexed address,bytes32,bytes32)
+        - event: PredictionAdded(indexed address,uint16,indexed address,bytes32[],bytes32)
           handler: handlePredictionAdded
       file: ./src/omen-agent-result-mapping.ts

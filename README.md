@@ -7,7 +7,7 @@ Repository holding the contracts made by Gnosis Labs team.
 | Contract Name             | Description                                           | Mainnet Address                           | TheGraph |
 |----------------------------|-------------------------------------------------------|-------------------------------------------||-------------------------------------------|
 | OmenThumbnailMapping     | Manages IPFS hashes for market thumbnails on Omen 2.0 | [0xe0cf08311F03850497B0ed6A2cf067f1750C3eFc](https://gnosisscan.io/address/0xe0cf08311f03850497b0ed6a2cf067f1750c3efc#code)   | [omen-thumbnailmapping](https://thegraph.com/studio/subgraph/omen-thumbnailmapping/) |
-| OmenAgentResultMapping     | Maps prediction results to markets on Omen 2.0 | [0xbe1F6944496923683ca849fc0cC93fD10523cB83](https://gnosisscan.io/address/0xbe1F6944496923683ca849fc0cC93fD10523cB83#code)   | [omen-agentresultmapping](https://thegraph.com/studio/subgraph/omen-agentresultmapping/) |
+| OmenAgentResultMapping     | Maps prediction results to markets on Omen 2.0 | [0xbe1F6944496923683ca849fc0cC93fD10523cB83](https://gnosisscan.io/address/0x260E1077dEA98e738324A6cEfB0EE9A272eD471a#code)   | [omen-agentresultmapping](https://thegraph.com/studio/subgraph/omen-agentresultmapping/) |
 
 
 ## Set up contracts development
@@ -75,6 +75,8 @@ forge create --gas-limit 10000000 --rpc-url https://rpc.chiadochain.net  --priva
 ```shell
 ETHERSCAN_API_KEY=<your_api_key> forge create --verify --verifier-url https://api.gnosisscan.io/api --rpc-url https://gnosis-rpc.publicnode.com --private-key <your_private_key> OmenThumbnailMapping
 ```
+
+ETHERSCAN_API_KEY=HGZTJXNFNXRU8K84DBEQRAJI2VUDURV4F9 forge create --verify --verifier-url https://api.gnosisscan.io/api --rpc-url https://gnosis-rpc.publicnode.com --private-key c78b481a738f9af99181edd989794602ff021318fac97070a20e9fb7d0e054e4 OmenAgentResultMapping
 
 #### (Optional) Deploy on a Tenderly testnet
 forge create OmenAgentResultMapping \
