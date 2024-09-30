@@ -6,7 +6,7 @@ export function createPredictionAddedEvent(
   marketAddress: Address,
   estimatedProbabilityBps: i32,
   publisherAddress: Address,
-  txHash: Bytes,
+  txHashes: Array<Bytes>,
   ipfsHash: Bytes
 ): PredictionAdded {
   let predictionAddedEvent = changetype<PredictionAdded>(newMockEvent())
@@ -32,7 +32,10 @@ export function createPredictionAddedEvent(
     )
   )
   predictionAddedEvent.parameters.push(
-    new ethereum.EventParam("txHash", ethereum.Value.fromFixedBytes(txHash))
+    new ethereum.EventParam(
+      "txHashes",
+      ethereum.Value.fromFixedBytesArray(txHashes)
+    )
   )
   predictionAddedEvent.parameters.push(
     new ethereum.EventParam("ipfsHash", ethereum.Value.fromFixedBytes(ipfsHash))

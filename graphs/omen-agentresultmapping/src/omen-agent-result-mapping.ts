@@ -8,7 +8,7 @@ export function handlePredictionAdded(event: PredictionAddedEvent): void {
   entity.marketAddress = event.params.marketAddress
   entity.estimatedProbabilityBps = event.params.estimatedProbabilityBps
   entity.publisherAddress = event.params.publisherAddress
-  entity.txHash = event.params.txHash
+  entity.txHashes = event.params.txHashes
   entity.ipfsHash = event.params.ipfsHash
 
   entity.blockNumber = event.block.number

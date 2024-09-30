@@ -3,7 +3,7 @@ type PredictionAdded @entity(immutable: true) {
   marketAddress: Bytes! # address
   estimatedProbabilityBps: Int! # uint16
   publisherAddress: Bytes! # address
-  txHash: Bytes! # bytes32
+  txHashes: [Bytes!]! # bytes32[]
   ipfsHash: Bytes! # bytes32
   blockNumber: BigInt!
   blockTimestamp: BigInt!
