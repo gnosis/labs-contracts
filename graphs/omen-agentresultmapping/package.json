@@ -1,18 +1,20 @@
 {
-  "name": "omen-agentresultmapping",
+  "name": "agentresultmapping",
   "license": "UNLICENSED",
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ omen-agentresultmapping",
-    "create-local": "graph create --node http://localhost:8020/ omen-agentresultmapping",
-    "remove-local": "graph remove --node http://localhost:8020/ omen-agentresultmapping",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 omen-agentresultmapping",
+    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ omen-agent-result-mapping",
+    "create-local": "graph create --node http://localhost:8020/ omen-agent-result-mapping",
+    "remove-local": "graph remove --node http://localhost:8020/ omen-agent-result-mapping",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 omen-agent-result-mapping",
     "test": "graph test"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.82.0",
     "@graphprotocol/graph-ts": "0.32.0"
   },
-  "devDependencies": { "matchstick-as": "0.5.0" }
+  "devDependencies": {
+    "matchstick-as": "0.5.0"
+  }
 }
