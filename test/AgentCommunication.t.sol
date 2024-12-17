@@ -2,11 +2,11 @@
 // Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.22;
 
-import "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
+//import "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "forge-std/Test.sol";
 import {AgentCommunication} from "../src/NFT/AgentCommunication.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import "../src/NFT/DoubleEndedStructQueue.sol";
 
 contract AgentCommunicationTest is Test {
     AgentCommunication agentComm;
@@ -47,18 +47,26 @@ contract AgentCommunicationTest is Test {
     }
 
     function testSendMessage() public {
-        bytes32 message = "Hello, Agent!";
+        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.MessageContainer({
+            sender: agent, // or any appropriate address
+            recipient: address(0x789), // or any appropriate address
+            message: "Hello, Agent!" // Ensure this is a bytes32 type
+        });
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
         agentComm.sendMessage{value: 10000000000000}(agent, message);
         vm.stopPrank();
 
-        bytes32 storedMessage = agentComm.getAtIndex(agent, 0);
-        assertEq(storedMessage, message);
+        DoubleEndedStructQueue.MessageContainer memory storedMessage = agentComm.getAtIndex(agent, 0);
+        assertEq(storedMessage.message, message.message);
     }
 
     function testSendMessageInsufficientValue() public {
-        bytes32 message = "Hello, Agent!";
+        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.MessageContainer({
+            sender: agent,
+            recipient: address(0x789), // or any appropriate address
+            message: bytes32("Hello, Agent!") // Ensure this is a bytes32 type
+        });
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
         vm.expectRevert("Insufficient message value");
@@ -66,22 +74,55 @@ contract AgentCommunicationTest is Test {
         vm.stopPrank();
     }
 
+    function testNewMessageSentEvent() public {
+        address recipient = address(0x789);
+        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.MessageContainer({
+            sender: agent,
+            recipient: recipient,
+            message: bytes32("Hello, Agent!") // Ensure this is a bytes32 type
+        });
+        vm.deal(agent, 1 ether);
+        vm.startPrank(agent);
+
+        // Expect the NewMessageSent event to be emitted
+        vm.expectEmit(true, true, false, true);
+        emit AgentCommunication.NewMessageSent(agent, message.recipient, message.message);
+
+        // Send the message
+        agentComm.sendMessage{value: 0.2 ether}(recipient, message);
+        vm.stopPrank();
+    }
+
     function testPopNextMessage() public {
-        bytes32 message = "Hello, Agent!";
+        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.MessageContainer({
+            sender: agent,
+            recipient: address(0x789), // or any appropriate address
+            message: bytes32("Hello, Agent!") // Ensure this is a bytes32 type
+        });
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
         agentComm.sendMessage{value: 10000000000000}(agent, message);
         vm.stopPrank();
 
+        // Expect the MessagePopped event to be emitted
+        vm.expectEmit(true, true, false, true);
+        emit AgentCommunication.MessagePopped(agent, message.message);
         vm.startPrank(agent);
-        bytes32 poppedMessage = agentComm.popNextMessage(agent);
+        DoubleEndedStructQueue.MessageContainer memory poppedMessage = agentComm.popNextMessage(agent);
         vm.stopPrank();
 
-        assertEq(poppedMessage, message);
+        assertEq(poppedMessage.message, message.message);
+        uint256 numMessages = agentComm.countMessages(agent);
+        assertEq(numMessages, 0);
     }
 
+    // ToDo - reset name
     function testPopNextMessageNotByAgent() public {
-        bytes32 message = "Hello, Agent!";
+        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.MessageContainer({
+            sender: agent,
+            recipient: address(0x789), // or any appropriate address
+            message: bytes32("Hello, Agent!") // Ensure this is a bytes32 type
+        });
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
         agentComm.sendMessage{value: 10000000000000}(agent, message);
@@ -92,5 +133,35 @@ contract AgentCommunicationTest is Test {
         vm.expectRevert(AgentCommunication.MessageNotSentByAgent.selector);
         agentComm.popNextMessage(agent);
         vm.stopPrank();
+    }
+
+    function testCountMessages() public {
+        // Initialize a message
+        DoubleEndedStructQueue.MessageContainer memory message1 = DoubleEndedStructQueue.MessageContainer({
+            sender: agent,
+            recipient: address(0x789),
+            message: bytes32("Hello, Agent 1!") // Ensure this is a bytes32 type
+        });
+
+        DoubleEndedStructQueue.MessageContainer memory message2 = DoubleEndedStructQueue.MessageContainer({
+            sender: agent,
+            recipient: address(0x789),
+            message: bytes32("Hello, Agent 2!") // Ensure this is a bytes32 type
+        });
+
+        // Fund the agent and start the prank
+        vm.deal(agent, 1 ether);
+        vm.startPrank(agent);
+
+        // Send two messages
+        agentComm.sendMessage{value: 10000000000000}(agent, message1);
+        agentComm.sendMessage{value: 10000000000000}(agent, message2);
+
+        // Stop the prank
+        vm.stopPrank();
+
+        // Check the count of messages
+        uint256 messageCount = agentComm.countMessages(agent);
+        assertEq(messageCount, 2, "The message count should be 2");
     }
 }

@@ -2,16 +2,18 @@
 // Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.22;
 
-import "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
+//import "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import "./DoubleEndedStructQueue.sol";
 
 contract AgentCommunication is Ownable {
     error MessageNotSentByAgent();
 
-    mapping(address => DoubleEndedQueue.Bytes32Deque) public queues;
+    mapping(address => DoubleEndedStructQueue.Bytes32Deque) public queues;
     uint256 public minimumValueForSendingMessageInWei;
 
-    event NewMessageSent(address indexed sender, bytes32 message);
+    event NewMessageSent(address indexed sender, address indexed agentAddress, bytes32 message);
+    event MessagePopped(address indexed agentAddress, bytes32 message);
 
     constructor() Ownable(msg.sender) {
         minimumValueForSendingMessageInWei = 10000000000000; // 0.00001 xDAI
@@ -26,19 +28,33 @@ contract AgentCommunication is Ownable {
         minimumValueForSendingMessageInWei = newValue;
     }
 
-    function sendMessage(address agentAddress, bytes32 message) public payable mustPayMoreThanMinimum {
-        DoubleEndedQueue.pushBack(queues[agentAddress], message);
-        emit NewMessageSent(agentAddress, message);
+    function countMessages(address agentAddress) public view returns (uint256) {
+        return DoubleEndedStructQueue.length(queues[agentAddress]);
     }
 
-    function getAtIndex(address agentAddress, uint256 idx) public view returns (bytes32) {
-        return DoubleEndedQueue.at(queues[agentAddress], idx);
+    function sendMessage(address agentAddress, DoubleEndedStructQueue.MessageContainer memory message)
+        public
+        payable
+        mustPayMoreThanMinimum
+    {
+        DoubleEndedStructQueue.pushBack(queues[agentAddress], message);
+        emit NewMessageSent(msg.sender, agentAddress, message.message);
     }
 
-    function popNextMessage(address agentAddress) public returns (bytes32) {
+    function getAtIndex(address agentAddress, uint256 idx)
+        public
+        view
+        returns (DoubleEndedStructQueue.MessageContainer memory)
+    {
+        return DoubleEndedStructQueue.at(queues[agentAddress], idx);
+    }
+
+    function popNextMessage(address agentAddress) public returns (DoubleEndedStructQueue.MessageContainer memory) {
         if (msg.sender != agentAddress) {
             revert MessageNotSentByAgent();
         }
-        return DoubleEndedQueue.popFront(queues[agentAddress]);
+        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.popFront(queues[agentAddress]);
+        emit MessagePopped(agentAddress, message.message);
+        return message;
     }
 }
