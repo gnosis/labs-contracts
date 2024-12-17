@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v5.0.0) (utils/structs/DoubleEndedQueue.sol)
 pragma solidity ^0.8.20;
 
 import {Panic} from "@openzeppelin/contracts/utils/Panic.sol";
 
+// Based on OpenZeppelin's DoubleEndedQueue, but with a custom struct as data type instead of bytes32.
+// See https://docs.openzeppelin.com/contracts/5.x/api/utils#DoubleEndedQueue
 library DoubleEndedStructQueue {
     struct MessageContainer {
         address sender;
