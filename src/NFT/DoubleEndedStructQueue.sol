@@ -9,7 +9,7 @@ library DoubleEndedStructQueue {
     struct MessageContainer {
         address sender;
         address recipient;
-        bytes32 message;
+        bytes message;
     }
 
     struct Bytes32Deque {
