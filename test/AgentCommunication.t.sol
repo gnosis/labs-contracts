@@ -11,6 +11,14 @@ contract AgentCommunicationTest is Test {
     address owner = address(0x123);
     address agent = address(0x456);
 
+    function buildMessage() public view returns (DoubleEndedStructQueue.MessageContainer memory) {
+        return DoubleEndedStructQueue.MessageContainer({
+            sender: agent,
+            recipient: address(0x789),
+            message: "Hello, Agent!"
+        });
+    }
+
     function setUp() public {
         vm.startPrank(owner);
         agentComm = new AgentCommunication();
@@ -45,11 +53,7 @@ contract AgentCommunicationTest is Test {
     }
 
     function testSendMessage() public {
-        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.MessageContainer({
-            sender: agent, // or any appropriate address
-            recipient: address(0x789), // or any appropriate address
-            message: "Hello, Agent!" // Ensure this is a bytes32 type
-        });
+        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
         agentComm.sendMessage{value: 10000000000000}(agent, message);
@@ -60,11 +64,7 @@ contract AgentCommunicationTest is Test {
     }
 
     function testSendMessageInsufficientValue() public {
-        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.MessageContainer({
-            sender: agent,
-            recipient: address(0x789), // or any appropriate address
-            message: bytes32("Hello, Agent!") // Ensure this is a bytes32 type
-        });
+        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
         vm.expectRevert("Insufficient message value");
@@ -74,11 +74,7 @@ contract AgentCommunicationTest is Test {
 
     function testNewMessageSentEvent() public {
         address recipient = address(0x789);
-        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.MessageContainer({
-            sender: agent,
-            recipient: recipient,
-            message: bytes32("Hello, Agent!") // Ensure this is a bytes32 type
-        });
+        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
 
@@ -92,11 +88,7 @@ contract AgentCommunicationTest is Test {
     }
 
     function testPopNextMessage() public {
-        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.MessageContainer({
-            sender: agent,
-            recipient: address(0x789), // or any appropriate address
-            message: bytes32("Hello, Agent!") // Ensure this is a bytes32 type
-        });
+        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
         agentComm.sendMessage{value: 10000000000000}(agent, message);
@@ -116,11 +108,7 @@ contract AgentCommunicationTest is Test {
 
     // ToDo - reset name
     function testPopNextMessageNotByAgent() public {
-        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.MessageContainer({
-            sender: agent,
-            recipient: address(0x789), // or any appropriate address
-            message: bytes32("Hello, Agent!") // Ensure this is a bytes32 type
-        });
+        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
         agentComm.sendMessage{value: 10000000000000}(agent, message);
@@ -135,17 +123,9 @@ contract AgentCommunicationTest is Test {
 
     function testCountMessages() public {
         // Initialize a message
-        DoubleEndedStructQueue.MessageContainer memory message1 = DoubleEndedStructQueue.MessageContainer({
-            sender: agent,
-            recipient: address(0x789),
-            message: bytes32("Hello, Agent 1!") // Ensure this is a bytes32 type
-        });
+        DoubleEndedStructQueue.MessageContainer memory message1 = buildMessage();
 
-        DoubleEndedStructQueue.MessageContainer memory message2 = DoubleEndedStructQueue.MessageContainer({
-            sender: agent,
-            recipient: address(0x789),
-            message: bytes32("Hello, Agent 2!") // Ensure this is a bytes32 type
-        });
+        DoubleEndedStructQueue.MessageContainer memory message2 = buildMessage();
 
         // Fund the agent and start the prank
         vm.deal(agent, 1 ether);

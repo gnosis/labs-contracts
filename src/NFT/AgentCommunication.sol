@@ -10,8 +10,8 @@ contract AgentCommunication is Ownable {
     mapping(address => DoubleEndedStructQueue.Bytes32Deque) public queues;
     uint256 public minimumValueForSendingMessageInWei;
 
-    event NewMessageSent(address indexed sender, address indexed agentAddress, bytes32 message);
-    event MessagePopped(address indexed agentAddress, bytes32 message);
+    event NewMessageSent(address indexed sender, address indexed agentAddress, bytes message);
+    event MessagePopped(address indexed agentAddress, bytes message);
 
     constructor() Ownable(msg.sender) {
         minimumValueForSendingMessageInWei = 10000000000000; // 0.00001 xDAI
