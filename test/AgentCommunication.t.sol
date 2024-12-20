@@ -15,7 +15,8 @@ contract AgentCommunicationTest is Test {
         return DoubleEndedStructQueue.MessageContainer({
             sender: agent,
             recipient: address(0x789),
-            message: "Hello, Agent!"
+            message: "Hello, Agent!",
+            value: 1000000000000000000
         });
     }
 
@@ -56,7 +57,7 @@ contract AgentCommunicationTest is Test {
         DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
-        agentComm.sendMessage{value: 10000000000000}(agent, message);
+        agentComm.sendMessage{value: 10000000000000}(agent, message.message);
         vm.stopPrank();
 
         DoubleEndedStructQueue.MessageContainer memory storedMessage = agentComm.getAtIndex(agent, 0);
@@ -68,50 +69,59 @@ contract AgentCommunicationTest is Test {
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
         vm.expectRevert("Insufficient message value");
-        agentComm.sendMessage{value: 5000}(agent, message);
+        agentComm.sendMessage{value: 5000}(agent, message.message);
         vm.stopPrank();
     }
 
     function testNewMessageSentEvent() public {
-        address recipient = address(0x789);
         DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
 
-        // Expect the NewMessageSent event to be emitted
-        vm.expectEmit(true, true, false, true);
-        emit AgentCommunication.NewMessageSent(agent, message.recipient, message.message);
+        // Expect the LogMessage event to be emitted
+        vm.expectEmit(true, true, true, true);
+        emit AgentCommunication.LogMessage(message.sender, message.recipient, message.message, message.value);
 
         // Send the message
-        agentComm.sendMessage{value: 0.2 ether}(recipient, message);
+        agentComm.sendMessage{value: message.value}(address(0x789), message.message);
         vm.stopPrank();
     }
 
     function testPopNextMessage() public {
+        // Create a message container
         DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
+
+        // Fund the agent and start the prank
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
-        agentComm.sendMessage{value: 10000000000000}(agent, message);
+
+        // Send the message
+        agentComm.sendMessage{value: message.value}(message.recipient, message.message);
         vm.stopPrank();
 
-        // Expect the MessagePopped event to be emitted
-        vm.expectEmit(true, true, false, true);
-        emit AgentCommunication.MessagePopped(agent, message.message);
-        vm.startPrank(agent);
-        DoubleEndedStructQueue.MessageContainer memory poppedMessage = agentComm.popNextMessage(agent);
+        // Start the prank again for popping the message
+        vm.startPrank(message.recipient);
+
+        // Expect the LogMessage event to be emitted when popping the message
+        vm.expectEmit(true, true, true, true);
+        emit AgentCommunication.LogMessage(message.sender, message.recipient, message.message, message.value);
+
+        // Pop the next message
+        DoubleEndedStructQueue.MessageContainer memory poppedMessage = agentComm.popNextMessage(message.recipient);
         vm.stopPrank();
 
+        // Assert that the popped message matches the original message
+        assertEq(poppedMessage.sender, message.sender);
+        assertEq(poppedMessage.recipient, message.recipient);
         assertEq(poppedMessage.message, message.message);
-        uint256 numMessages = agentComm.countMessages(agent);
-        assertEq(numMessages, 0);
+        assertEq(poppedMessage.value, message.value);
     }
 
-    // ToDo - reset name
     function testPopNextMessageNotByAgent() public {
         DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
-        agentComm.sendMessage{value: 10000000000000}(agent, message);
+        agentComm.sendMessage{value: 10000000000000}(agent, message.message);
         vm.stopPrank();
 
         address notAgent = address(0x789);
@@ -132,8 +142,8 @@ contract AgentCommunicationTest is Test {
         vm.startPrank(agent);
 
         // Send two messages
-        agentComm.sendMessage{value: 10000000000000}(agent, message1);
-        agentComm.sendMessage{value: 10000000000000}(agent, message2);
+        agentComm.sendMessage{value: 10000000000000}(agent, message1.message);
+        agentComm.sendMessage{value: 10000000000000}(agent, message2.message);
 
         // Stop the prank
         vm.stopPrank();

@@ -10,6 +10,7 @@ library DoubleEndedStructQueue {
         address sender;
         address recipient;
         bytes message;
+        uint256 value;
     }
 
     struct Bytes32Deque {

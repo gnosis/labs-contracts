@@ -10,8 +10,7 @@ contract AgentCommunication is Ownable {
     mapping(address => DoubleEndedStructQueue.Bytes32Deque) public queues;
     uint256 public minimumValueForSendingMessageInWei;
 
-    event NewMessageSent(address indexed sender, address indexed agentAddress, bytes message);
-    event MessagePopped(address indexed agentAddress, bytes message);
+    event LogMessage(address indexed sender, address indexed agentAddress, bytes message, uint256 value);
 
     constructor() Ownable(msg.sender) {
         minimumValueForSendingMessageInWei = 10000000000000; // 0.00001 xDAI
@@ -30,13 +29,11 @@ contract AgentCommunication is Ownable {
         return DoubleEndedStructQueue.length(queues[agentAddress]);
     }
 
-    function sendMessage(address agentAddress, DoubleEndedStructQueue.MessageContainer memory message)
-        public
-        payable
-        mustPayMoreThanMinimum
-    {
-        DoubleEndedStructQueue.pushBack(queues[agentAddress], message);
-        emit NewMessageSent(msg.sender, agentAddress, message.message);
+    function sendMessage(address agentAddress, bytes memory message) public payable mustPayMoreThanMinimum {
+        DoubleEndedStructQueue.MessageContainer memory messageContainer =
+            DoubleEndedStructQueue.MessageContainer(msg.sender, agentAddress, message, msg.value);
+        DoubleEndedStructQueue.pushBack(queues[agentAddress], messageContainer);
+        emit LogMessage(msg.sender, agentAddress, messageContainer.message, msg.value);
     }
 
     function getAtIndex(address agentAddress, uint256 idx)
@@ -52,7 +49,7 @@ contract AgentCommunication is Ownable {
             revert MessageNotSentByAgent();
         }
         DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.popFront(queues[agentAddress]);
-        emit MessagePopped(agentAddress, message.message);
+        emit LogMessage(message.sender, agentAddress, message.message, message.value);
         return message;
     }
 }
