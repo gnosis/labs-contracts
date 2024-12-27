@@ -10,6 +10,8 @@ contract AgentCommunicationTest is Test {
     AgentCommunication agentComm;
     address owner = address(0x123);
     address agent = address(0x456);
+    address payable treasury = payable(address(0x789));
+    uint256 pctToTreasuryInBasisPoints = 7000;
 
     function buildMessage() public view returns (DoubleEndedStructQueue.MessageContainer memory) {
         return DoubleEndedStructQueue.MessageContainer({
@@ -22,11 +24,11 @@ contract AgentCommunicationTest is Test {
 
     function setUp() public {
         vm.startPrank(owner);
-        agentComm = new AgentCommunication();
+        agentComm = new AgentCommunication(treasury, pctToTreasuryInBasisPoints);
         vm.stopPrank();
     }
 
-    function testInitialMinimumValue() public {
+    function testInitialMinimumValue() public view {
         uint256 expectedValue = 10000000000000; // 0.00001 xDAI
         assertEq(agentComm.minimumValueForSendingMessageInWei(), expectedValue);
     }
@@ -55,10 +57,25 @@ contract AgentCommunicationTest is Test {
 
     function testSendMessage() public {
         DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
-        vm.deal(agent, 1 ether);
-        vm.startPrank(agent);
-        agentComm.sendMessage{value: 10000000000000}(agent, message.message);
+        vm.deal(owner, 1 ether);
+
+        // Record initial balances
+        uint256 initialBalanceTreasury = treasury.balance;
+        uint256 initialBalanceAgent = agent.balance;
+
+        assertEq(address(agentComm).balance, 0);
+
+        vm.startPrank(owner);
+        uint256 messageValue = 10000000000000;
+        agentComm.sendMessage{value: messageValue}(agent, message.message);
         vm.stopPrank();
+
+        // Assert treasuries increased correctly
+        uint256 diffBalanceTreasury = treasury.balance - initialBalanceTreasury;
+        uint256 diffBalanceAgent = agent.balance - initialBalanceAgent;
+        assertEq(messageValue * pctToTreasuryInBasisPoints / 10000, diffBalanceTreasury);
+        assertEq(messageValue * (10000 - pctToTreasuryInBasisPoints) / 10000, diffBalanceAgent);
+        assertEq(address(agentComm).balance, 0);
 
         DoubleEndedStructQueue.MessageContainer memory storedMessage = agentComm.getAtIndex(agent, 0);
         assertEq(storedMessage.message, message.message);

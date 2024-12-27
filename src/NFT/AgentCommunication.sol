@@ -5,14 +5,20 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "./DoubleEndedStructQueue.sol";
 
 contract AgentCommunication is Ownable {
+    address payable public treasury;
+    uint256 public pctToTreasuryInBasisPoints; //70% becomes 7000
+
     error MessageNotSentByAgent();
 
     mapping(address => DoubleEndedStructQueue.Bytes32Deque) public queues;
+
     uint256 public minimumValueForSendingMessageInWei;
 
     event LogMessage(address indexed sender, address indexed agentAddress, bytes message, uint256 value);
 
-    constructor() Ownable(msg.sender) {
+    constructor(address payable _treasury, uint256 _pctToTreasuryInBasisPoints) Ownable(msg.sender) {
+        treasury = _treasury;
+        pctToTreasuryInBasisPoints = _pctToTreasuryInBasisPoints;
         minimumValueForSendingMessageInWei = 10000000000000; // 0.00001 xDAI
     }
 
@@ -29,7 +35,23 @@ contract AgentCommunication is Ownable {
         return DoubleEndedStructQueue.length(queues[agentAddress]);
     }
 
+    // Private function to calculate the amounts
+    function _calculateAmounts(uint256 totalValue) private view returns (uint256, uint256) {
+        uint256 amountForTreasury = (totalValue * pctToTreasuryInBasisPoints) / 10000; // 10000 since basis points are used
+        uint256 amountForAgent = totalValue - amountForTreasury;
+        return (amountForTreasury, amountForAgent);
+    }
+
     function sendMessage(address agentAddress, bytes memory message) public payable mustPayMoreThanMinimum {
+        // split message value between treasury and agent
+        (uint256 amountForTreasury, uint256 amountForAgent) = _calculateAmounts(msg.value);
+
+        // Transfer the amounts
+        (bool sentTreasury,) = treasury.call{value: amountForTreasury}("");
+        require(sentTreasury, "Failed to send Ether");
+        (bool sentAgent,) = payable(agentAddress).call{value: amountForAgent}("");
+        require(sentAgent, "Failed to send Ether");
+
         DoubleEndedStructQueue.MessageContainer memory messageContainer =
             DoubleEndedStructQueue.MessageContainer(msg.sender, agentAddress, message, msg.value);
         DoubleEndedStructQueue.pushBack(queues[agentAddress], messageContainer);
