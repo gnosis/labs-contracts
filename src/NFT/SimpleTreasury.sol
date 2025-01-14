@@ -19,7 +19,7 @@ contract SimpleTreasury is Ownable {
         nftContract = IERC721(_nftContract);
     }
 
-    // Function to receive ETH
+    // Function to receive xDAI
     receive() external payable {}
 
     // Withdraw function that checks NFT balance
