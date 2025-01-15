@@ -169,4 +169,26 @@ contract AgentCommunicationTest is Test {
         uint256 messageCount = agentComm.countMessages(agent);
         assertEq(messageCount, 2, "The message count should be 2");
     }
+
+    function testSetTreasuryAddress() public {
+        address payable newTreasury = payable(address(0xabc));
+        vm.startPrank(owner);
+        agentComm.setTreasuryAddress(newTreasury);
+        vm.stopPrank();
+        assertEq(address(agentComm.treasury()), address(newTreasury));
+    }
+
+    function testOnlyOwnerCanSetTreasuryAddress() public {
+        address payable newTreasury = payable(address(0xabc));
+        address nonOwner = address(0xdef);
+
+        // Attempt to set treasury address from a non-owner address
+        vm.startPrank(nonOwner);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(nonOwner)));
+        agentComm.setTreasuryAddress(newTreasury);
+        vm.stopPrank();
+
+        // Verify that the treasury address has not changed
+        assertEq(address(agentComm.treasury()), address(treasury));
+    }
 }

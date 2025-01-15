@@ -9,7 +9,7 @@ Repository holding the contracts made by Gnosis Labs team.
 | OmenThumbnailMapping    | Manages IPFS hashes for market thumbnails on Omen 2.0 | [0xe0cf08311F03850497B0ed6A2cf067f1750C3eFc](https://gnosisscan.io/address/0xe0cf08311f03850497b0ed6a2cf067f1750c3efc#code) | [omen-thumbnailmapping](https://thegraph.com/studio/subgraph/omen-thumbnailmapping/)         |
 | OmenAgentResultMapping  | Maps prediction results to markets on Omen 2.0        | [0xbe1F6944496923683ca849fc0cC93fD10523cB83](https://gnosisscan.io/address/0x260E1077dEA98e738324A6cEfB0EE9A272eD471a#code) | [omen-agentresultmapping](https://thegraph.com/studio/subgraph/omen-agentresultmapping/)     |
 | Agent NFT               | Agent NFTs that control mechs for NFT game            | [0x0D7C0Bd4169D090038c6F41CFd066958fe7619D0](https://gnosisscan.io/address/0x0D7C0Bd4169D090038c6F41CFd066958fe7619D0#code) |  |
-| Agent communication contract               | Simple contract storing message queue for each agent            | [0x38D934cD28b0F75102Ce4F8566Ab014DdfD31636](https://gnosisscan.io/address/0x38D934cD28b0F75102Ce4F8566Ab014DdfD31636#code) |  |
+| Agent communication contract               | Simple contract storing message queue for each agent            | [0xc566Cb829Ed7aC097D17a38011A40Ad2DC25Dd82](https://gnosisscan.io/address/0xc566Cb829Ed7aC097D17a38011A40Ad2DC25Dd82#code) |  |
 | Simple Treasury contract               | Contract for storing the NFT agent game treasury | [0x624ad0db52e6b18afb4d36b8e79d0c2a74f3fc8a](https://gnosisscan.io/address/0x624ad0db52e6b18afb4d36b8e79d0c2a74f3fc8a#code) |  |
 
 ## Set up contracts development
