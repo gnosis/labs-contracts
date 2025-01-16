@@ -27,6 +27,10 @@ contract AgentCommunication is Ownable {
         _;
     }
 
+    function setTreasuryAddress(address payable _treasury) public onlyOwner {
+        treasury = _treasury;
+    }
+
     function adjustMinimumValueForSendingMessage(uint256 newValue) public onlyOwner {
         minimumValueForSendingMessageInWei = newValue;
     }
