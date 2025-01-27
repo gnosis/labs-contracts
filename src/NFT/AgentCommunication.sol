@@ -70,11 +70,14 @@ contract AgentCommunication is Ownable {
         return DoubleEndedStructQueue.at(queues[agentAddress], idx);
     }
 
-    function popNextMessage(address agentAddress) public returns (DoubleEndedStructQueue.MessageContainer memory) {
+    function popMessageAtIndex(address agentAddress, uint256 idx)
+        public
+        returns (DoubleEndedStructQueue.MessageContainer memory)
+    {
         if (msg.sender != agentAddress) {
             revert MessageNotSentByAgent();
         }
-        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.popFront(queues[agentAddress]);
+        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.popAt(queues[agentAddress], idx);
         emit LogMessage(message.sender, agentAddress, message.message, message.value);
         return message;
     }

@@ -78,6 +78,28 @@ library DoubleEndedStructQueue {
         }
     }
 
+    function popAt(Bytes32Deque storage deque, uint256 index) internal returns (MessageContainer memory value) {
+        if (index >= length(deque)) Panic.panic(Panic.ARRAY_OUT_OF_BOUNDS);
+        unchecked {
+            if (index == 0) {
+                return popFront(deque);
+            } else if (index == length(deque) - 1) {
+                return popBack(deque);
+            } else {
+                uint128 actualIndex = deque._begin + uint128(index);
+                value = deque._data[actualIndex];
+                delete deque._data[actualIndex];
+
+                // Shift elements to fill the gap
+                for (uint128 i = actualIndex; i < deque._end - 1; i++) {
+                    deque._data[i] = deque._data[i + 1];
+                }
+                delete deque._data[deque._end - 1];
+                deque._end--;
+            }
+        }
+    }
+
     function clear(Bytes32Deque storage deque) internal {
         deque._begin = 0;
         deque._end = 0;
