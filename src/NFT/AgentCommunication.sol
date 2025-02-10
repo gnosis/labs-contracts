@@ -9,12 +9,17 @@ contract AgentCommunication is Ownable {
     uint256 public pctToTreasuryInBasisPoints; //70% becomes 7000
 
     error MessageNotSentByAgent();
+    error AgentNotRegistered();
 
     mapping(address => DoubleEndedStructQueue.Bytes32Deque) public queues;
+    mapping(address => bool) public registeredAgents;
+    address[] private registeredAgentsList;
 
     uint256 public minimumValueForSendingMessageInWei;
 
     event LogMessage(address indexed sender, address indexed agentAddress, bytes message, uint256 value);
+    event AgentRegistered(address indexed agent);
+    event AgentDeregistered(address indexed agent);
 
     constructor(address payable _treasury, uint256 _pctToTreasuryInBasisPoints) Ownable(msg.sender) {
         treasury = _treasury;
@@ -25,6 +30,32 @@ contract AgentCommunication is Ownable {
     modifier mustPayMoreThanMinimum() {
         require(msg.value >= minimumValueForSendingMessageInWei, "Insufficient message value");
         _;
+    }
+
+    modifier onlyRegisteredAgent() {
+        if (!registeredAgents[msg.sender]) {
+            revert AgentNotRegistered();
+        }
+        _;
+    }
+
+    function registerAsAgent() public {
+        registeredAgents[msg.sender] = true;
+        registeredAgentsList.push(msg.sender);
+        emit AgentRegistered(msg.sender);
+    }
+
+    function deregisterAsAgent() public onlyRegisteredAgent {
+        registeredAgents[msg.sender] = false;
+        // Remove from list
+        for (uint256 i = 0; i < registeredAgentsList.length; i++) {
+            if (registeredAgentsList[i] == msg.sender) {
+                registeredAgentsList[i] = registeredAgentsList[registeredAgentsList.length - 1];
+                registeredAgentsList.pop();
+                break;
+            }
+        }
+        emit AgentDeregistered(msg.sender);
     }
 
     function setTreasuryAddress(address payable _treasury) public onlyOwner {
@@ -47,6 +78,10 @@ contract AgentCommunication is Ownable {
     }
 
     function sendMessage(address agentAddress, bytes memory message) public payable mustPayMoreThanMinimum {
+        if (!registeredAgents[agentAddress]) {
+            revert AgentNotRegistered();
+        }
+
         // split message value between treasury and agent
         (uint256 amountForTreasury, uint256 amountForAgent) = _calculateAmounts(msg.value);
 
@@ -70,12 +105,13 @@ contract AgentCommunication is Ownable {
         return DoubleEndedStructQueue.at(queues[agentAddress], idx);
     }
 
-    function popNextMessage(address agentAddress) public returns (DoubleEndedStructQueue.MessageContainer memory) {
-        if (msg.sender != agentAddress) {
-            revert MessageNotSentByAgent();
-        }
-        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.popFront(queues[agentAddress]);
-        emit LogMessage(message.sender, agentAddress, message.message, message.value);
+    function popNextMessage() public onlyRegisteredAgent returns (DoubleEndedStructQueue.MessageContainer memory) {
+        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.popFront(queues[msg.sender]);
+        emit LogMessage(message.sender, msg.sender, message.message, message.value);
         return message;
+    }
+
+    function getAllRegisteredAgents() public view returns (address[] memory) {
+        return registeredAgentsList;
     }
 }
