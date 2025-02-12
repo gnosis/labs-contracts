@@ -3,7 +3,7 @@ pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "forge-std/Test.sol";
-import {AgentCommunication} from "../src/NFT/AgentCommunication.sol";
+import {AgentRegistry, AgentCommunication, IAgentRegistry} from "../src/NFT/AgentCommunication.sol";
 import "../src/NFT/DoubleEndedStructQueue.sol";
 
 contract AgentCommunicationTest is Test {
@@ -13,11 +13,15 @@ contract AgentCommunicationTest is Test {
     address payable treasury = payable(address(0x789));
     uint256 pctToTreasuryInBasisPoints = 7000;
 
-    function buildMessage() public view returns (DoubleEndedStructQueue.MessageContainer memory) {
+    function buildMessage(bytes memory customMessage)
+        public
+        view
+        returns (DoubleEndedStructQueue.MessageContainer memory)
+    {
         return DoubleEndedStructQueue.MessageContainer({
             sender: agent,
             recipient: address(0x789),
-            message: "Hello, Agent!",
+            message: customMessage,
             value: 1000000000000000000
         });
     }
@@ -60,7 +64,7 @@ contract AgentCommunicationTest is Test {
 
         // Expect AgentRegistered event
         vm.expectEmit(true, false, false, false);
-        emit AgentCommunication.AgentRegistered(agent);
+        emit IAgentRegistry.AgentRegistered(agent);
 
         agentComm.registerAsAgent();
         vm.stopPrank();
@@ -74,7 +78,7 @@ contract AgentCommunicationTest is Test {
 
         // Expect AgentDeregistered event
         vm.expectEmit(true, false, false, false);
-        emit AgentCommunication.AgentDeregistered(agent);
+        emit IAgentRegistry.AgentDeregistered(agent);
 
         agentComm.deregisterAsAgent();
         vm.stopPrank();
@@ -84,13 +88,13 @@ contract AgentCommunicationTest is Test {
 
     function testDeregisterAsAgentWhenNotRegistered() public {
         vm.startPrank(agent);
-        vm.expectRevert(AgentCommunication.AgentNotRegistered.selector);
+        vm.expectRevert(IAgentRegistry.AgentNotRegistered.selector);
         agentComm.deregisterAsAgent();
         vm.stopPrank();
     }
 
     function testSendMessageToRegisteredAgent() public {
-        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
+        DoubleEndedStructQueue.MessageContainer memory message = buildMessage("Hello!");
         vm.deal(owner, 1 ether);
 
         // Register the agent first
@@ -120,17 +124,17 @@ contract AgentCommunicationTest is Test {
     }
 
     function testSendMessageToUnregisteredAgent() public {
-        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
+        DoubleEndedStructQueue.MessageContainer memory message = buildMessage("Hello!");
         vm.deal(owner, 1 ether);
 
         vm.startPrank(owner);
-        vm.expectRevert(AgentCommunication.AgentNotRegistered.selector);
+        vm.expectRevert(IAgentRegistry.AgentNotRegistered.selector);
         agentComm.sendMessage{value: 10000000000000}(agent, message.message);
         vm.stopPrank();
     }
 
     function testSendMessageInsufficientValue() public {
-        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
+        DoubleEndedStructQueue.MessageContainer memory message = buildMessage("Hello!");
         vm.deal(agent, 1 ether);
         vm.startPrank(agent);
         vm.expectRevert("Insufficient message value");
@@ -139,7 +143,7 @@ contract AgentCommunicationTest is Test {
     }
 
     function testNewMessageSentEvent() public {
-        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
+        DoubleEndedStructQueue.MessageContainer memory message = buildMessage("Hello!");
         vm.deal(agent, 1 ether);
 
         // Register the recipient
@@ -157,63 +161,71 @@ contract AgentCommunicationTest is Test {
         vm.stopPrank();
     }
 
-    function testPopNextMessage() public {
-        // Create a message container
-        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
+    function testPopMessage() public {
+        // Create a message containers
+        DoubleEndedStructQueue.MessageContainer memory message_1 = buildMessage("Hello 1!");
+        DoubleEndedStructQueue.MessageContainer memory message_2 = buildMessage("Hello 2!");
+        DoubleEndedStructQueue.MessageContainer memory message_3 = buildMessage("Hello 3!");
+        DoubleEndedStructQueue.MessageContainer memory message_4 = buildMessage("Hello 4!");
+        DoubleEndedStructQueue.MessageContainer memory message_5 = buildMessage("Hello 5!");
 
-        // Register the recipient
-        vm.prank(message.recipient);
+        // Register the recipients
+        vm.prank(message_1.recipient);
+        agentComm.registerAsAgent();
+        vm.prank(message_2.recipient);
+        agentComm.registerAsAgent();
+        vm.prank(message_3.recipient);
+        agentComm.registerAsAgent();
+        vm.prank(message_4.recipient);
+        agentComm.registerAsAgent();
+        vm.prank(message_5.recipient);
         agentComm.registerAsAgent();
 
         // Fund the agent and start the prank
-        vm.deal(agent, 1 ether);
+        vm.deal(agent, 5 ether);
         vm.startPrank(agent);
 
-        // Send the message
-        agentComm.sendMessage{value: message.value}(message.recipient, message.message);
+        // Send the messages
+        agentComm.sendMessage{value: message_1.value}(message_1.recipient, message_1.message);
+        agentComm.sendMessage{value: message_2.value}(message_2.recipient, message_2.message);
+        agentComm.sendMessage{value: message_3.value}(message_3.recipient, message_3.message);
+        agentComm.sendMessage{value: message_4.value}(message_4.recipient, message_4.message);
+        agentComm.sendMessage{value: message_5.value}(message_5.recipient, message_5.message);
         vm.stopPrank();
 
         // Start the prank again for popping the message
-        vm.startPrank(message.recipient);
+        vm.startPrank(message_1.recipient);
 
         // Expect the LogMessage event to be emitted when popping the message
         vm.expectEmit(true, true, true, true);
-        emit AgentCommunication.LogMessage(message.sender, message.recipient, message.message, message.value);
+        emit AgentCommunication.LogMessage(message_1.sender, message_1.recipient, message_1.message, message_1.value);
 
         // Pop the next message
-        DoubleEndedStructQueue.MessageContainer memory poppedMessage = agentComm.popNextMessage();
+        DoubleEndedStructQueue.MessageContainer memory poppedMessage_1 = agentComm.popMessageAtIndex(0);
         vm.stopPrank();
 
         // Assert that the popped message matches the original message
-        assertEq(poppedMessage.sender, message.sender);
-        assertEq(poppedMessage.recipient, message.recipient);
-        assertEq(poppedMessage.message, message.message);
-        assertEq(poppedMessage.value, message.value);
-    }
+        assertEq(poppedMessage_1.sender, message_1.sender);
+        assertEq(poppedMessage_1.recipient, message_1.recipient);
+        assertEq(poppedMessage_1.message, message_1.message);
+        assertEq(poppedMessage_1.value, message_1.value);
 
-    function testPopNextMessageNotByAgent() public {
-        DoubleEndedStructQueue.MessageContainer memory message = buildMessage();
+        // Start the prank again for popping another message
+        vm.prank(message_1.recipient);
+        // Pop the message at specified index
+        DoubleEndedStructQueue.MessageContainer memory poppedMessage_2 = agentComm.popMessageAtIndex(2);
 
-        // Register agent
-        vm.prank(agent);
-        agentComm.registerAsAgent();
-
-        vm.deal(agent, 1 ether);
-        vm.startPrank(agent);
-        agentComm.sendMessage{value: 10000000000000}(agent, message.message);
-        vm.stopPrank();
-
-        address notAgent = address(0x789);
-        vm.startPrank(notAgent);
-        vm.expectRevert(AgentCommunication.AgentNotRegistered.selector);
-        agentComm.popNextMessage();
-        vm.stopPrank();
+        // Assert that the popped message matches the original message
+        assertEq(poppedMessage_2.sender, message_4.sender);
+        assertEq(poppedMessage_2.recipient, message_4.recipient);
+        assertEq(poppedMessage_2.message, message_4.message);
+        assertEq(poppedMessage_2.value, message_4.value);
     }
 
     function testCountMessages() public {
         // Initialize a message
-        DoubleEndedStructQueue.MessageContainer memory message1 = buildMessage();
-        DoubleEndedStructQueue.MessageContainer memory message2 = buildMessage();
+        DoubleEndedStructQueue.MessageContainer memory message1 = buildMessage("Hello!");
+        DoubleEndedStructQueue.MessageContainer memory message2 = buildMessage("Hello!");
 
         // Register agent
         vm.prank(agent);
