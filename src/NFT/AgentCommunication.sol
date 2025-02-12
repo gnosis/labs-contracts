@@ -23,7 +23,7 @@ contract AgentRegistry is IAgentRegistry, Ownable {
     constructor() Ownable(msg.sender) {}
 
     modifier onlyRegisteredAgent() {
-        if (!registeredAgents[msg.sender]) {
+        if (!isRegisteredAgent(msg.sender)) {
             revert AgentNotRegistered();
         }
         _;
@@ -86,8 +86,8 @@ contract AgentCommunication is AgentRegistry {
         minimumValueForSendingMessageInWei = newValue;
     }
 
-    function countMessages(address agentAddress) public view returns (uint256) {
-        return DoubleEndedStructQueue.length(queues[agentAddress]);
+    function countMessages() public view onlyRegisteredAgent returns (uint256) {
+        return DoubleEndedStructQueue.length(queues[msg.sender]);
     }
 
     // Private function to calculate the amounts
@@ -97,7 +97,12 @@ contract AgentCommunication is AgentRegistry {
         return (amountForTreasury, amountForAgent);
     }
 
-    function sendMessage(address agentAddress, bytes memory message) public payable mustPayMoreThanMinimum {
+    function sendMessage(address agentAddress, bytes memory message)
+        public
+        payable
+        mustPayMoreThanMinimum
+        onlyRegisteredAgent
+    {
         if (!isRegisteredAgent(agentAddress)) {
             revert IAgentRegistry.AgentNotRegistered();
         }
@@ -117,18 +122,20 @@ contract AgentCommunication is AgentRegistry {
         emit LogMessage(msg.sender, agentAddress, messageContainer.message, msg.value);
     }
 
-    function getAtIndex(address agentAddress, uint256 idx)
+    function getAtIndex(uint256 idx)
         public
         view
+        onlyRegisteredAgent
         returns (DoubleEndedStructQueue.MessageContainer memory)
     {
-        return DoubleEndedStructQueue.at(queues[agentAddress], idx);
+        return DoubleEndedStructQueue.at(queues[msg.sender], idx);
     }
 
-    function popMessageAtIndex(uint256 idx) public returns (DoubleEndedStructQueue.MessageContainer memory) {
-        if (!isRegisteredAgent(msg.sender)) {
-            revert IAgentRegistry.AgentNotRegistered();
-        }
+    function popMessageAtIndex(uint256 idx)
+        public
+        onlyRegisteredAgent
+        returns (DoubleEndedStructQueue.MessageContainer memory)
+    {
         DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.popAt(queues[msg.sender], idx);
         emit LogMessage(message.sender, msg.sender, message.message, message.value);
         return message;
