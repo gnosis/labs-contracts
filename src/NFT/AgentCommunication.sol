@@ -97,12 +97,8 @@ contract AgentCommunication is AgentRegistry {
         return (amountForTreasury, amountForAgent);
     }
 
-    function sendMessage(address agentAddress, bytes memory message)
-        public
-        payable
-        mustPayMoreThanMinimum
-        onlyRegisteredAgent
-    {
+    // We don't add `onlyRegisteredAgent` modifier here, because anyone should be able to send a message to an agent
+    function sendMessage(address agentAddress, bytes memory message) public payable mustPayMoreThanMinimum {
         if (!isRegisteredAgent(agentAddress)) {
             revert IAgentRegistry.AgentNotRegistered();
         }

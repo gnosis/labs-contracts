@@ -119,7 +119,8 @@ contract AgentCommunicationTest is Test {
         assertEq(messageValue * (10000 - pctToTreasuryInBasisPoints) / 10000, diffBalanceAgent);
         assertEq(address(agentComm).balance, 0);
 
-        DoubleEndedStructQueue.MessageContainer memory storedMessage = agentComm.getAtIndex(agent, 0);
+        vm.prank(agent);
+        DoubleEndedStructQueue.MessageContainer memory storedMessage = agentComm.getAtIndex(0);
         assertEq(storedMessage.message, message.message);
     }
 
@@ -157,7 +158,7 @@ contract AgentCommunicationTest is Test {
         emit AgentCommunication.LogMessage(message.sender, message.recipient, message.message, message.value);
 
         // Send the message
-        agentComm.sendMessage{value: message.value}(address(0x789), message.message);
+        agentComm.sendMessage{value: message.value}(message.recipient, message.message);
         vm.stopPrank();
     }
 
@@ -239,11 +240,8 @@ contract AgentCommunicationTest is Test {
         agentComm.sendMessage{value: 10000000000000}(agent, message1.message);
         agentComm.sendMessage{value: 10000000000000}(agent, message2.message);
 
-        // Stop the prank
-        vm.stopPrank();
-
         // Check the count of messages
-        uint256 messageCount = agentComm.countMessages(agent);
+        uint256 messageCount = agentComm.countMessages();
         assertEq(messageCount, 2, "The message count should be 2");
     }
 
