@@ -3,7 +3,7 @@ pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "forge-std/Test.sol";
-import {AgentCommunication} from "../src/NFT/AgentCommunication.sol";
+import {AgentRegistry, AgentCommunication, IAgentRegistry} from "../src/NFT/AgentCommunication.sol";
 import "../src/NFT/DoubleEndedStructQueue.sol";
 
 contract AgentCommunicationTest is Test {
@@ -59,9 +59,47 @@ contract AgentCommunicationTest is Test {
         assertEq(agentComm.minimumValueForSendingMessageInWei(), 10000000000000);
     }
 
-    function testSendMessage() public {
+    function testRegisterAsAgent() public {
+        vm.startPrank(agent);
+
+        // Expect AgentRegistered event
+        vm.expectEmit(true, false, false, false);
+        emit IAgentRegistry.AgentRegistered(agent);
+
+        agentComm.registerAsAgent();
+        vm.stopPrank();
+
+        assertTrue(agentComm.registeredAgents(agent), "Agent should be registered");
+    }
+
+    function testDeregisterAsAgent() public {
+        vm.startPrank(agent);
+        agentComm.registerAsAgent();
+
+        // Expect AgentDeregistered event
+        vm.expectEmit(true, false, false, false);
+        emit IAgentRegistry.AgentDeregistered(agent);
+
+        agentComm.deregisterAsAgent();
+        vm.stopPrank();
+
+        assertFalse(agentComm.registeredAgents(agent), "Agent should be deregistered");
+    }
+
+    function testDeregisterAsAgentWhenNotRegistered() public {
+        vm.startPrank(agent);
+        vm.expectRevert(IAgentRegistry.AgentNotRegistered.selector);
+        agentComm.deregisterAsAgent();
+        vm.stopPrank();
+    }
+
+    function testSendMessageToRegisteredAgent() public {
         DoubleEndedStructQueue.MessageContainer memory message = buildMessage("Hello!");
         vm.deal(owner, 1 ether);
+
+        // Register the agent first
+        vm.prank(agent);
+        agentComm.registerAsAgent();
 
         // Record initial balances
         uint256 initialBalanceTreasury = treasury.balance;
@@ -81,8 +119,19 @@ contract AgentCommunicationTest is Test {
         assertEq(messageValue * (10000 - pctToTreasuryInBasisPoints) / 10000, diffBalanceAgent);
         assertEq(address(agentComm).balance, 0);
 
-        DoubleEndedStructQueue.MessageContainer memory storedMessage = agentComm.getAtIndex(agent, 0);
+        vm.prank(agent);
+        DoubleEndedStructQueue.MessageContainer memory storedMessage = agentComm.getAtIndex(0);
         assertEq(storedMessage.message, message.message);
+    }
+
+    function testSendMessageToUnregisteredAgent() public {
+        DoubleEndedStructQueue.MessageContainer memory message = buildMessage("Hello!");
+        vm.deal(owner, 1 ether);
+
+        vm.startPrank(owner);
+        vm.expectRevert(IAgentRegistry.AgentNotRegistered.selector);
+        agentComm.sendMessage{value: 10000000000000}(agent, message.message);
+        vm.stopPrank();
     }
 
     function testSendMessageInsufficientValue() public {
@@ -97,6 +146,11 @@ contract AgentCommunicationTest is Test {
     function testNewMessageSentEvent() public {
         DoubleEndedStructQueue.MessageContainer memory message = buildMessage("Hello!");
         vm.deal(agent, 1 ether);
+
+        // Register the recipient
+        vm.prank(message.recipient);
+        agentComm.registerAsAgent();
+
         vm.startPrank(agent);
 
         // Expect the LogMessage event to be emitted
@@ -104,7 +158,7 @@ contract AgentCommunicationTest is Test {
         emit AgentCommunication.LogMessage(message.sender, message.recipient, message.message, message.value);
 
         // Send the message
-        agentComm.sendMessage{value: message.value}(address(0x789), message.message);
+        agentComm.sendMessage{value: message.value}(message.recipient, message.message);
         vm.stopPrank();
     }
 
@@ -115,6 +169,18 @@ contract AgentCommunicationTest is Test {
         DoubleEndedStructQueue.MessageContainer memory message_3 = buildMessage("Hello 3!");
         DoubleEndedStructQueue.MessageContainer memory message_4 = buildMessage("Hello 4!");
         DoubleEndedStructQueue.MessageContainer memory message_5 = buildMessage("Hello 5!");
+
+        // Register the recipients
+        vm.prank(message_1.recipient);
+        agentComm.registerAsAgent();
+        vm.prank(message_2.recipient);
+        agentComm.registerAsAgent();
+        vm.prank(message_3.recipient);
+        agentComm.registerAsAgent();
+        vm.prank(message_4.recipient);
+        agentComm.registerAsAgent();
+        vm.prank(message_5.recipient);
+        agentComm.registerAsAgent();
 
         // Fund the agent and start the prank
         vm.deal(agent, 5 ether);
@@ -136,8 +202,7 @@ contract AgentCommunicationTest is Test {
         emit AgentCommunication.LogMessage(message_1.sender, message_1.recipient, message_1.message, message_1.value);
 
         // Pop the next message
-        DoubleEndedStructQueue.MessageContainer memory poppedMessage_1 =
-            agentComm.popMessageAtIndex(message_1.recipient, 0);
+        DoubleEndedStructQueue.MessageContainer memory poppedMessage_1 = agentComm.popMessageAtIndex(0);
         vm.stopPrank();
 
         // Assert that the popped message matches the original message
@@ -147,12 +212,9 @@ contract AgentCommunicationTest is Test {
         assertEq(poppedMessage_1.value, message_1.value);
 
         // Start the prank again for popping another message
-        vm.startPrank(message_1.recipient);
-
+        vm.prank(message_1.recipient);
         // Pop the message at specified index
-        DoubleEndedStructQueue.MessageContainer memory poppedMessage_2 =
-            agentComm.popMessageAtIndex(message_1.recipient, 2);
-        vm.stopPrank();
+        DoubleEndedStructQueue.MessageContainer memory poppedMessage_2 = agentComm.popMessageAtIndex(2);
 
         // Assert that the popped message matches the original message
         assertEq(poppedMessage_2.sender, message_4.sender);
@@ -161,25 +223,14 @@ contract AgentCommunicationTest is Test {
         assertEq(poppedMessage_2.value, message_4.value);
     }
 
-    function testPopMessageNotByAgent() public {
-        DoubleEndedStructQueue.MessageContainer memory message = buildMessage("Hello!");
-        vm.deal(agent, 1 ether);
-        vm.startPrank(agent);
-        agentComm.sendMessage{value: 10000000000000}(agent, message.message);
-        vm.stopPrank();
-
-        address notAgent = address(0x789);
-        vm.startPrank(notAgent);
-        vm.expectRevert(AgentCommunication.MessageNotSentByAgent.selector);
-        agentComm.popMessageAtIndex(agent, 0);
-        vm.stopPrank();
-    }
-
     function testCountMessages() public {
         // Initialize a message
         DoubleEndedStructQueue.MessageContainer memory message1 = buildMessage("Hello!");
-
         DoubleEndedStructQueue.MessageContainer memory message2 = buildMessage("Hello!");
+
+        // Register agent
+        vm.prank(agent);
+        agentComm.registerAsAgent();
 
         // Fund the agent and start the prank
         vm.deal(agent, 1 ether);
@@ -189,11 +240,8 @@ contract AgentCommunicationTest is Test {
         agentComm.sendMessage{value: 10000000000000}(agent, message1.message);
         agentComm.sendMessage{value: 10000000000000}(agent, message2.message);
 
-        // Stop the prank
-        vm.stopPrank();
-
         // Check the count of messages
-        uint256 messageCount = agentComm.countMessages(agent);
+        uint256 messageCount = agentComm.countMessages();
         assertEq(messageCount, 2, "The message count should be 2");
     }
 
@@ -217,5 +265,40 @@ contract AgentCommunicationTest is Test {
 
         // Verify that the treasury address has not changed
         assertEq(address(agentComm.treasury()), address(treasury));
+    }
+
+    function testGetAllRegisteredAgents() public {
+        // Initially there should be no registered agents
+        address[] memory initialAgents = agentComm.getAllRegisteredAgents();
+        assertEq(initialAgents.length, 0, "Should start with no registered agents");
+
+        // Register first agent
+        vm.prank(agent);
+        agentComm.registerAsAgent();
+
+        // Register second agent
+        address agent2 = address(0xaaa);
+        vm.prank(agent2);
+        agentComm.registerAsAgent();
+
+        // Get the list of registered agents
+        address[] memory registeredAgents = agentComm.getAllRegisteredAgents();
+
+        // Verify the list contains both agents
+        assertEq(registeredAgents.length, 2, "Should have two registered agents");
+        assertTrue(
+            (registeredAgents[0] == agent && registeredAgents[1] == agent2)
+                || (registeredAgents[0] == agent2 && registeredAgents[1] == agent),
+            "List should contain both registered agents"
+        );
+
+        // Deregister one agent
+        vm.prank(agent);
+        agentComm.deregisterAsAgent();
+
+        // Verify the list now only contains one agent
+        address[] memory remainingAgents = agentComm.getAllRegisteredAgents();
+        assertEq(remainingAgents.length, 1, "Should have one registered agent");
+        assertEq(remainingAgents[0], agent2, "Should contain the remaining agent");
     }
 }

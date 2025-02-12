@@ -4,11 +4,62 @@ pragma solidity ^0.8.22;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "./DoubleEndedStructQueue.sol";
 
-contract AgentCommunication is Ownable {
-    address payable public treasury;
-    uint256 public pctToTreasuryInBasisPoints; //70% becomes 7000
+interface IAgentRegistry {
+    error AgentNotRegistered();
 
-    error MessageNotSentByAgent();
+    event AgentRegistered(address indexed agent);
+    event AgentDeregistered(address indexed agent);
+
+    function registerAsAgent() external;
+    function deregisterAsAgent() external;
+    function isRegisteredAgent(address agent) external view returns (bool);
+    function getAllRegisteredAgents() external view returns (address[] memory);
+}
+
+contract AgentRegistry is IAgentRegistry, Ownable {
+    mapping(address => bool) public registeredAgents;
+    address[] private registeredAgentsList;
+
+    constructor() Ownable(msg.sender) {}
+
+    modifier onlyRegisteredAgent() {
+        if (!isRegisteredAgent(msg.sender)) {
+            revert AgentNotRegistered();
+        }
+        _;
+    }
+
+    function registerAsAgent() public {
+        registeredAgents[msg.sender] = true;
+        registeredAgentsList.push(msg.sender);
+        emit AgentRegistered(msg.sender);
+    }
+
+    function deregisterAsAgent() public onlyRegisteredAgent {
+        registeredAgents[msg.sender] = false;
+        // Remove from list
+        for (uint256 i = 0; i < registeredAgentsList.length; i++) {
+            if (registeredAgentsList[i] == msg.sender) {
+                registeredAgentsList[i] = registeredAgentsList[registeredAgentsList.length - 1];
+                registeredAgentsList.pop();
+                break;
+            }
+        }
+        emit AgentDeregistered(msg.sender);
+    }
+
+    function isRegisteredAgent(address agent) public view returns (bool) {
+        return registeredAgents[agent];
+    }
+
+    function getAllRegisteredAgents() public view returns (address[] memory) {
+        return registeredAgentsList;
+    }
+}
+
+contract AgentCommunication is AgentRegistry {
+    address payable public treasury;
+    uint256 public pctToTreasuryInBasisPoints; // 70% becomes 7000
 
     mapping(address => DoubleEndedStructQueue.Bytes32Deque) public queues;
 
@@ -16,7 +67,7 @@ contract AgentCommunication is Ownable {
 
     event LogMessage(address indexed sender, address indexed agentAddress, bytes message, uint256 value);
 
-    constructor(address payable _treasury, uint256 _pctToTreasuryInBasisPoints) Ownable(msg.sender) {
+    constructor(address payable _treasury, uint256 _pctToTreasuryInBasisPoints) {
         treasury = _treasury;
         pctToTreasuryInBasisPoints = _pctToTreasuryInBasisPoints;
         minimumValueForSendingMessageInWei = 10000000000000; // 0.00001 xDAI
@@ -35,8 +86,8 @@ contract AgentCommunication is Ownable {
         minimumValueForSendingMessageInWei = newValue;
     }
 
-    function countMessages(address agentAddress) public view returns (uint256) {
-        return DoubleEndedStructQueue.length(queues[agentAddress]);
+    function countMessages() public view onlyRegisteredAgent returns (uint256) {
+        return DoubleEndedStructQueue.length(queues[msg.sender]);
     }
 
     // Private function to calculate the amounts
@@ -46,15 +97,20 @@ contract AgentCommunication is Ownable {
         return (amountForTreasury, amountForAgent);
     }
 
+    // We don't add `onlyRegisteredAgent` modifier here, because anyone should be able to send a message to an agent
     function sendMessage(address agentAddress, bytes memory message) public payable mustPayMoreThanMinimum {
-        // split message value between treasury and agent
+        if (!isRegisteredAgent(agentAddress)) {
+            revert IAgentRegistry.AgentNotRegistered();
+        }
+
+        // Split message value between treasury and agent
         (uint256 amountForTreasury, uint256 amountForAgent) = _calculateAmounts(msg.value);
 
         // Transfer the amounts
         (bool sentTreasury,) = treasury.call{value: amountForTreasury}("");
-        require(sentTreasury, "Failed to send Ether");
+        require(sentTreasury, "Failed to send Ether to treasury");
         (bool sentAgent,) = payable(agentAddress).call{value: amountForAgent}("");
-        require(sentAgent, "Failed to send Ether");
+        require(sentAgent, "Failed to send Ether to agent");
 
         DoubleEndedStructQueue.MessageContainer memory messageContainer =
             DoubleEndedStructQueue.MessageContainer(msg.sender, agentAddress, message, msg.value);
@@ -62,23 +118,22 @@ contract AgentCommunication is Ownable {
         emit LogMessage(msg.sender, agentAddress, messageContainer.message, msg.value);
     }
 
-    function getAtIndex(address agentAddress, uint256 idx)
+    function getAtIndex(uint256 idx)
         public
         view
+        onlyRegisteredAgent
         returns (DoubleEndedStructQueue.MessageContainer memory)
     {
-        return DoubleEndedStructQueue.at(queues[agentAddress], idx);
+        return DoubleEndedStructQueue.at(queues[msg.sender], idx);
     }
 
-    function popMessageAtIndex(address agentAddress, uint256 idx)
+    function popMessageAtIndex(uint256 idx)
         public
+        onlyRegisteredAgent
         returns (DoubleEndedStructQueue.MessageContainer memory)
     {
-        if (msg.sender != agentAddress) {
-            revert MessageNotSentByAgent();
-        }
-        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.popAt(queues[agentAddress], idx);
-        emit LogMessage(message.sender, agentAddress, message.message, message.value);
+        DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.popAt(queues[msg.sender], idx);
+        emit LogMessage(message.sender, msg.sender, message.message, message.value);
         return message;
     }
 }
