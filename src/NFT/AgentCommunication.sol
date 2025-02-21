@@ -24,7 +24,7 @@ contract AgentRegistry is IAgentRegistry, Ownable {
 
     modifier onlyRegisteredAgent() {
         if (!isRegisteredAgent(msg.sender)) {
-            revert AgentNotRegistered();
+            revert IAgentRegistry.AgentNotRegistered();
         }
         _;
     }
@@ -32,7 +32,7 @@ contract AgentRegistry is IAgentRegistry, Ownable {
     function registerAsAgent() public {
         registeredAgents[msg.sender] = true;
         registeredAgentsList.push(msg.sender);
-        emit AgentRegistered(msg.sender);
+        emit IAgentRegistry.AgentRegistered(msg.sender);
     }
 
     function deregisterAsAgent() public onlyRegisteredAgent {
@@ -45,7 +45,7 @@ contract AgentRegistry is IAgentRegistry, Ownable {
                 break;
             }
         }
-        emit AgentDeregistered(msg.sender);
+        emit IAgentRegistry.AgentDeregistered(msg.sender);
     }
 
     function isRegisteredAgent(address agent) public view returns (bool) {
@@ -57,7 +57,8 @@ contract AgentRegistry is IAgentRegistry, Ownable {
     }
 }
 
-contract AgentCommunication is AgentRegistry {
+contract AgentCommunication is Ownable {
+    IAgentRegistry public agentRegistry;
     address payable public treasury;
     uint256 public pctToTreasuryInBasisPoints; // 70% becomes 7000
 
@@ -67,10 +68,20 @@ contract AgentCommunication is AgentRegistry {
 
     event LogMessage(address indexed sender, address indexed agentAddress, bytes message, uint256 value);
 
-    constructor(address payable _treasury, uint256 _pctToTreasuryInBasisPoints) {
+    constructor(IAgentRegistry _agentRegistry, address payable _treasury, uint256 _pctToTreasuryInBasisPoints)
+        Ownable(msg.sender)
+    {
+        agentRegistry = _agentRegistry;
         treasury = _treasury;
         pctToTreasuryInBasisPoints = _pctToTreasuryInBasisPoints;
         minimumValueForSendingMessageInWei = 10000000000000; // 0.00001 xDAI
+    }
+
+    modifier onlyRegisteredAgent() {
+        if (!agentRegistry.isRegisteredAgent(msg.sender)) {
+            revert IAgentRegistry.AgentNotRegistered();
+        }
+        _;
     }
 
     modifier mustPayMoreThanMinimum() {
@@ -99,7 +110,7 @@ contract AgentCommunication is AgentRegistry {
 
     // We don't add `onlyRegisteredAgent` modifier here, because anyone should be able to send a message to an agent
     function sendMessage(address agentAddress, bytes memory message) public payable mustPayMoreThanMinimum {
-        if (!isRegisteredAgent(agentAddress)) {
+        if (!agentRegistry.isRegisteredAgent(agentAddress)) {
             revert IAgentRegistry.AgentNotRegistered();
         }
 

@@ -3,10 +3,11 @@ pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "forge-std/Test.sol";
-import {AgentRegistry, AgentCommunication, IAgentRegistry} from "../src/NFT/AgentCommunication.sol";
+import {IAgentRegistry, AgentRegistry, AgentCommunication} from "../src/NFT/AgentCommunication.sol";
 import "../src/NFT/DoubleEndedStructQueue.sol";
 
 contract AgentCommunicationTest is Test {
+    AgentRegistry agentReg;
     AgentCommunication agentComm;
     address owner = address(0x123);
     address agent = address(0x456);
@@ -28,7 +29,8 @@ contract AgentCommunicationTest is Test {
 
     function setUp() public {
         vm.startPrank(owner);
-        agentComm = new AgentCommunication(treasury, pctToTreasuryInBasisPoints);
+        agentReg = new AgentRegistry();
+        agentComm = new AgentCommunication(IAgentRegistry(agentReg), treasury, pctToTreasuryInBasisPoints);
         vm.stopPrank();
     }
 
@@ -63,33 +65,33 @@ contract AgentCommunicationTest is Test {
         vm.startPrank(agent);
 
         // Expect AgentRegistered event
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit(true, true, true, true);
         emit IAgentRegistry.AgentRegistered(agent);
 
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
         vm.stopPrank();
 
-        assertTrue(agentComm.registeredAgents(agent), "Agent should be registered");
+        assertTrue(agentReg.isRegisteredAgent(agent), "Agent should be registered");
     }
 
     function testDeregisterAsAgent() public {
         vm.startPrank(agent);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
 
         // Expect AgentDeregistered event
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit(true, true, true, true);
         emit IAgentRegistry.AgentDeregistered(agent);
 
-        agentComm.deregisterAsAgent();
+        agentReg.deregisterAsAgent();
         vm.stopPrank();
 
-        assertFalse(agentComm.registeredAgents(agent), "Agent should be deregistered");
+        assertFalse(agentReg.isRegisteredAgent(agent), "Agent should be deregistered");
     }
 
     function testDeregisterAsAgentWhenNotRegistered() public {
         vm.startPrank(agent);
         vm.expectRevert(IAgentRegistry.AgentNotRegistered.selector);
-        agentComm.deregisterAsAgent();
+        agentReg.deregisterAsAgent();
         vm.stopPrank();
     }
 
@@ -99,7 +101,7 @@ contract AgentCommunicationTest is Test {
 
         // Register the agent first
         vm.prank(agent);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
 
         // Record initial balances
         uint256 initialBalanceTreasury = treasury.balance;
@@ -149,7 +151,7 @@ contract AgentCommunicationTest is Test {
 
         // Register the recipient
         vm.prank(message.recipient);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
 
         vm.startPrank(agent);
 
@@ -172,15 +174,15 @@ contract AgentCommunicationTest is Test {
 
         // Register the recipients
         vm.prank(message_1.recipient);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
         vm.prank(message_2.recipient);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
         vm.prank(message_3.recipient);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
         vm.prank(message_4.recipient);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
         vm.prank(message_5.recipient);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
 
         // Fund the agent and start the prank
         vm.deal(agent, 5 ether);
@@ -230,7 +232,7 @@ contract AgentCommunicationTest is Test {
 
         // Register agent
         vm.prank(agent);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
 
         // Fund the agent and start the prank
         vm.deal(agent, 1 ether);
@@ -269,20 +271,20 @@ contract AgentCommunicationTest is Test {
 
     function testGetAllRegisteredAgents() public {
         // Initially there should be no registered agents
-        address[] memory initialAgents = agentComm.getAllRegisteredAgents();
+        address[] memory initialAgents = agentReg.getAllRegisteredAgents();
         assertEq(initialAgents.length, 0, "Should start with no registered agents");
 
         // Register first agent
         vm.prank(agent);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
 
         // Register second agent
         address agent2 = address(0xaaa);
         vm.prank(agent2);
-        agentComm.registerAsAgent();
+        agentReg.registerAsAgent();
 
         // Get the list of registered agents
-        address[] memory registeredAgents = agentComm.getAllRegisteredAgents();
+        address[] memory registeredAgents = agentReg.getAllRegisteredAgents();
 
         // Verify the list contains both agents
         assertEq(registeredAgents.length, 2, "Should have two registered agents");
@@ -294,10 +296,10 @@ contract AgentCommunicationTest is Test {
 
         // Deregister one agent
         vm.prank(agent);
-        agentComm.deregisterAsAgent();
+        agentReg.deregisterAsAgent();
 
         // Verify the list now only contains one agent
-        address[] memory remainingAgents = agentComm.getAllRegisteredAgents();
+        address[] memory remainingAgents = agentReg.getAllRegisteredAgents();
         assertEq(remainingAgents.length, 1, "Should have one registered agent");
         assertEq(remainingAgents[0], agent2, "Should contain the remaining agent");
     }
