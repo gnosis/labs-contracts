@@ -2,6 +2,7 @@
 pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./DoubleEndedStructQueue.sol";
 
 interface IAgentRegistry {
@@ -17,8 +18,9 @@ interface IAgentRegistry {
 }
 
 contract AgentRegistry is IAgentRegistry, Ownable {
-    mapping(address => bool) public registeredAgents;
-    address[] private registeredAgentsList;
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    EnumerableSet.AddressSet private registeredAgents;
 
     constructor() Ownable(msg.sender) {}
 
@@ -30,30 +32,21 @@ contract AgentRegistry is IAgentRegistry, Ownable {
     }
 
     function registerAsAgent() public {
-        registeredAgents[msg.sender] = true;
-        registeredAgentsList.push(msg.sender);
+        registeredAgents.add(msg.sender);
         emit IAgentRegistry.AgentRegistered(msg.sender);
     }
 
     function deregisterAsAgent() public onlyRegisteredAgent {
-        registeredAgents[msg.sender] = false;
-        // Remove from list
-        for (uint256 i = 0; i < registeredAgentsList.length; i++) {
-            if (registeredAgentsList[i] == msg.sender) {
-                registeredAgentsList[i] = registeredAgentsList[registeredAgentsList.length - 1];
-                registeredAgentsList.pop();
-                break;
-            }
-        }
+        registeredAgents.remove(msg.sender);
         emit IAgentRegistry.AgentDeregistered(msg.sender);
     }
 
     function isRegisteredAgent(address agent) public view returns (bool) {
-        return registeredAgents[agent];
+        return registeredAgents.contains(agent);
     }
 
     function getAllRegisteredAgents() public view returns (address[] memory) {
-        return registeredAgentsList;
+        return registeredAgents.values();
     }
 }
 
