@@ -122,7 +122,7 @@ contract AgentCommunicationTest is Test {
         assertEq(address(agentComm).balance, 0);
 
         vm.prank(agent);
-        DoubleEndedStructQueue.MessageContainer memory storedMessage = agentComm.getAtIndex(0);
+        DoubleEndedStructQueue.MessageContainer memory storedMessage = agentComm.getAtIndex(address(agent), 0);
         assertEq(storedMessage.message, message.message);
     }
 
@@ -243,7 +243,7 @@ contract AgentCommunicationTest is Test {
         agentComm.sendMessage{value: 10000000000000}(agent, message2.message);
 
         // Check the count of messages
-        uint256 messageCount = agentComm.countMessages();
+        uint256 messageCount = agentComm.countMessages(address(agent));
         assertEq(messageCount, 2, "The message count should be 2");
     }
 

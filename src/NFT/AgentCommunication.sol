@@ -90,8 +90,8 @@ contract AgentCommunication is Ownable {
         minimumValueForSendingMessageInWei = newValue;
     }
 
-    function countMessages() public view onlyRegisteredAgent returns (uint256) {
-        return DoubleEndedStructQueue.length(queues[msg.sender]);
+    function countMessages(address agentAddress) public view returns (uint256) {
+        return DoubleEndedStructQueue.length(queues[agentAddress]);
     }
 
     // Private function to calculate the amounts
@@ -122,13 +122,12 @@ contract AgentCommunication is Ownable {
         emit LogMessage(msg.sender, agentAddress, messageContainer.message, msg.value);
     }
 
-    function getAtIndex(uint256 idx)
+    function getAtIndex(address agentAddress, uint256 idx)
         public
         view
-        onlyRegisteredAgent
         returns (DoubleEndedStructQueue.MessageContainer memory)
     {
-        return DoubleEndedStructQueue.at(queues[msg.sender], idx);
+        return DoubleEndedStructQueue.at(queues[agentAddress], idx);
     }
 
     function popMessageAtIndex(uint256 idx)
