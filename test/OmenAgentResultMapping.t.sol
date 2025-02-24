@@ -22,7 +22,10 @@ contract OmenAgentResultMappingTest is Test {
         bytes32 ipfsHash = keccak256(abi.encodePacked(input));
         bytes32 dummyTxHash = keccak256(abi.encodePacked("dummy transaction hash"));
         uint16 estimatedProbabilityBps = 6556; //65.56%
-        Prediction memory prediction = Prediction(publisher, ipfsHash, dummyTxHash, estimatedProbabilityBps);
+        bytes32[] memory txHashes = new bytes32[](2);
+        txHashes[0] = dummyTxHash;
+        txHashes[1] = dummyTxHash;
+        Prediction memory prediction = Prediction(publisher, ipfsHash, txHashes, estimatedProbabilityBps);
         return prediction;
     }
 
@@ -61,7 +64,7 @@ contract OmenAgentResultMappingTest is Test {
             marketAddress,
             prediction.estimatedProbabilityBps,
             prediction.publisherAddress,
-            prediction.txHash,
+            prediction.txHashes,
             prediction.ipfsHash
         );
         omenAgentResultMapping.addPrediction(marketAddress, prediction);

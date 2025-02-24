@@ -8,7 +8,7 @@ contract OmenAgentResultMapping {
         address indexed marketAddress,
         uint16 estimatedProbabilityBps,
         address indexed publisherAddress,
-        bytes32 txHash,
+        bytes32[] txHashes,
         bytes32 ipfsHash
     );
 
@@ -24,7 +24,7 @@ contract OmenAgentResultMapping {
         require(address(msg.sender) == address(prediction.publisherAddress), "Only publisher can add a prediction");
         marketPredictions[marketAddress].push(prediction);
         emit PredictionAdded(
-            marketAddress, prediction.estimatedProbabilityBps, msg.sender, prediction.txHash, prediction.ipfsHash
+            marketAddress, prediction.estimatedProbabilityBps, msg.sender, prediction.txHashes, prediction.ipfsHash
         );
     }
 

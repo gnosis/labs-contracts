@@ -24,13 +24,13 @@ describe("Describe entity assertions", () => {
     let publisherAddress = Address.fromString(
       "0x0000000000000000000000000000000000000001"
     )
-    let txHash = Bytes.fromI32(1234567890)
+    let txHashes = [Bytes.fromI32(1234567890)]
     let ipfsHash = Bytes.fromI32(1234567890)
     let newPredictionAddedEvent = createPredictionAddedEvent(
       marketAddress,
       estimatedProbabilityBps,
       publisherAddress,
-      txHash,
+      txHashes,
       ipfsHash
     )
     handlePredictionAdded(newPredictionAddedEvent)
@@ -68,8 +68,8 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "PredictionAdded",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
-      "txHash",
-      "1234567890"
+      "txHashes",
+      "[1234567890]"
     )
     assert.fieldEquals(
       "PredictionAdded",
