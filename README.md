@@ -9,8 +9,8 @@ Repository holding the contracts made by Gnosis Labs team.
 | OmenThumbnailMapping    | Manages IPFS hashes for market thumbnails on Omen 2.0 | [0xe0cf08311F03850497B0ed6A2cf067f1750C3eFc](https://gnosisscan.io/address/0xe0cf08311f03850497b0ed6a2cf067f1750c3efc#code) | [omen-thumbnailmapping](https://thegraph.com/studio/subgraph/omen-thumbnailmapping/)         |
 | OmenAgentResultMapping  | Maps prediction results to markets on Omen 2.0        | [0xbe1F6944496923683ca849fc0cC93fD10523cB83](https://gnosisscan.io/address/0x260E1077dEA98e738324A6cEfB0EE9A272eD471a#code) | [omen-agentresultmapping](https://thegraph.com/studio/subgraph/omen-agentresultmapping/)     |
 | Agent NFT               | Agent NFTs that control mechs for NFT game            | [0x0D7C0Bd4169D090038c6F41CFd066958fe7619D0](https://gnosisscan.io/address/0x0D7C0Bd4169D090038c6F41CFd066958fe7619D0#code) |  |
-| Agent Registry contract               | Simple contract storing active agent addresses            | [0x8a975d8cee52d1f61fe5e3f94068b58e1c4d2f79](https://gnosisscan.io/address/0x8a975d8cee52d1f61fe5e3f94068b58e1c4d2f79#code) |  |
-| Agent communication contract               | Simple contract storing message queue for each agent            | [0xa46db91a4c786f8262621fa2dae65ba5a96bc60e](https://gnosisscan.io/address/0xa46db91a4c786f8262621fa2dae65ba5a96bc60e#code) |  |
+| Agent Registry contract               | Simple contract storing active agent addresses            | [0xe8ae78b19c997b6da8189b1a644d4076f8bc880e](https://gnosisscan.io/address/0xe8ae78b19c997b6da8189b1a644d4076f8bc880e#code) |  |
+| Agent communication contract               | Simple contract storing message queue for each agent            | [0xca6c43b46febb0505d13a7704084912883eecf32](https://gnosisscan.io/address/0xca6c43b46febb0505d13a7704084912883eecf32#code) |  |
 | Simple Treasury contract               | Contract for storing the NFT agent game treasury | [0x624ad0db52e6b18afb4d36b8e79d0c2a74f3fc8a](https://gnosisscan.io/address/0x624ad0db52e6b18afb4d36b8e79d0c2a74f3fc8a#code) |  |
 
 ## Set up contracts development
