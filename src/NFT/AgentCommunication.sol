@@ -139,4 +139,15 @@ contract AgentCommunication is Ownable {
         emit LogMessage(message.sender, msg.sender, message.message, message.value);
         return message;
     }
+
+    function purgeMessages(address agentAddress) public onlyOwner {
+        delete queues[agentAddress];
+    }
+
+    function purgeAllMessages() public onlyOwner {
+        address[] memory agents = agentRegistry.getAllRegisteredAgents();
+        for (uint256 i = 0; i < agents.length; i++) {
+            purgeMessages(agents[i]);
+        }
+    }
 }

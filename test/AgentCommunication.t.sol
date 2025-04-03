@@ -247,6 +247,40 @@ contract AgentCommunicationTest is Test {
         assertEq(messageCount, 2, "The message count should be 2");
     }
 
+    function testPurgeMessages() public {
+        // Create a message containers
+        DoubleEndedStructQueue.MessageContainer memory message_1 = buildMessage("Hello 1!");
+        DoubleEndedStructQueue.MessageContainer memory message_2 = buildMessage("Hello 2!");
+
+        // Register the recipient
+        vm.prank(message_1.recipient);
+        agentReg.registerAsAgent();
+
+        // Fund the agent and start the prank
+        vm.deal(agent, 2 ether);
+        vm.startPrank(agent);
+
+        // Send the messages
+        agentComm.sendMessage{value: message_1.value}(message_1.recipient, message_1.message);
+        agentComm.sendMessage{value: message_2.value}(message_1.recipient, message_2.message);
+        vm.stopPrank();
+
+        // Try to purge all messages by non-owner
+        address nonOwner = address(0xabc);
+        vm.startPrank(nonOwner);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(nonOwner)));
+        agentComm.purgeAllMessages();
+        vm.stopPrank();
+
+        // Purge all messages by owner
+        vm.prank(owner);
+        agentComm.purgeAllMessages();
+
+        // Check that the message count is zero
+        uint256 messageCount = agentComm.countMessages(message_1.recipient);
+        assertEq(messageCount, 0, "The message count should be 0 after purging");
+    }
+
     function testSetTreasuryAddress() public {
         address payable newTreasury = payable(address(0xabc));
         vm.startPrank(owner);
