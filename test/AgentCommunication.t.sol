@@ -272,13 +272,23 @@ contract AgentCommunicationTest is Test {
         agentComm.purgeAllMessages();
         vm.stopPrank();
 
-        // Purge all messages by owner
-        vm.prank(owner);
-        agentComm.purgeAllMessages();
+        // Expect the MessagesPurged event to be emitted when purging messages by owner
+        vm.startPrank(owner);
+        vm.expectEmit(true, true, true, true);
+        emit AgentCommunication.MessagesPurged(message_1.recipient);
+        agentComm.purgeMessages(message_1.recipient);
+        vm.stopPrank();
 
         // Check that the message count is zero
         uint256 messageCount = agentComm.countMessages(message_1.recipient);
         assertEq(messageCount, 0, "The message count should be 0 after purging");
+
+        // Expect the AllMessagesPurged event to be emitted when purging all messages by owner
+        vm.startPrank(owner);
+        vm.expectEmit(true, true, true, true);
+        emit AgentCommunication.AllMessagesPurged();
+        agentComm.purgeAllMessages();
+        vm.stopPrank();
     }
 
     function testSetTreasuryAddress() public {
