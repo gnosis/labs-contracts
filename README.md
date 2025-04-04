@@ -10,7 +10,7 @@ Repository holding the contracts made by Gnosis Labs team.
 | OmenAgentResultMapping  | Maps prediction results to markets on Omen 2.0        | [0xbe1F6944496923683ca849fc0cC93fD10523cB83](https://gnosisscan.io/address/0x260E1077dEA98e738324A6cEfB0EE9A272eD471a#code) | [omen-agentresultmapping](https://thegraph.com/studio/subgraph/omen-agentresultmapping/)     |
 | Agent NFT               | Agent NFTs that control mechs for NFT game            | [0x0D7C0Bd4169D090038c6F41CFd066958fe7619D0](https://gnosisscan.io/address/0x0D7C0Bd4169D090038c6F41CFd066958fe7619D0#code) |  |
 | Agent Registry contract               | Simple contract storing active agent addresses            | [0xe8ae78b19c997b6da8189b1a644d4076f8bc880e](https://gnosisscan.io/address/0xe8ae78b19c997b6da8189b1a644d4076f8bc880e#code) |  |
-| Agent communication contract               | Simple contract storing message queue for each agent            | [0xca6c43b46febb0505d13a7704084912883eecf32](https://gnosisscan.io/address/0xca6c43b46febb0505d13a7704084912883eecf32#code) |  |
+| Agent communication contract               | Simple contract storing message queue for each agent            | [0x219083Fc5315fdc145eE5C0eb22CbE12d6115c53](https://gnosisscan.io/address/0x219083Fc5315fdc145eE5C0eb22CbE12d6115c53#code) |  |
 | Simple Treasury contract               | Contract for storing the NFT agent game treasury | [0x624ad0db52e6b18afb4d36b8e79d0c2a74f3fc8a](https://gnosisscan.io/address/0x624ad0db52e6b18afb4d36b8e79d0c2a74f3fc8a#code) |  |
 | DebuggingContract     | Add whatever function you need here to test out | [0x5Aa82E068aE6a6a1C26c42E5a59520a74Cdb8998](https://gnosisscan.io/address/0x5Aa82E068aE6a6a1C26c42E5a59520a74Cdb8998#code)   | none |
 

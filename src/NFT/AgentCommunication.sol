@@ -60,6 +60,8 @@ contract AgentCommunication is Ownable {
     uint256 public minimumValueForSendingMessageInWei;
 
     event LogMessage(address indexed sender, address indexed agentAddress, bytes message, uint256 value);
+    event MessagesPurged(address indexed agentAddress);
+    event AllMessagesPurged();
 
     constructor(IAgentRegistry _agentRegistry, address payable _treasury, uint256 _pctToTreasuryInBasisPoints)
         Ownable(msg.sender)
@@ -138,5 +140,18 @@ contract AgentCommunication is Ownable {
         DoubleEndedStructQueue.MessageContainer memory message = DoubleEndedStructQueue.popAt(queues[msg.sender], idx);
         emit LogMessage(message.sender, msg.sender, message.message, message.value);
         return message;
+    }
+
+    function purgeMessages(address agentAddress) public onlyOwner {
+        delete queues[agentAddress];
+        emit MessagesPurged(agentAddress);
+    }
+
+    function purgeAllMessages() public onlyOwner {
+        address[] memory agents = agentRegistry.getAllRegisteredAgents();
+        for (uint256 i = 0; i < agents.length; i++) {
+            purgeMessages(agents[i]);
+        }
+        emit AllMessagesPurged();
     }
 }
