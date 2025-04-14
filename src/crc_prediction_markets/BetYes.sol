@@ -12,6 +12,8 @@ contract BetYesContract is ERC1155Holder {
     ERC20 public immutable groupCRCToken;
     uint256 public immutable outcomeIndex;
 
+    //ToDo - balance per user for later redeem
+
     constructor(address fpmmAddress, address _groupCRCToken, uint256 _outcomeIndex) {
         fpmm = IFixedProductMarketMaker(fpmmAddress);
         groupCRCToken = ERC20(_groupCRCToken);
