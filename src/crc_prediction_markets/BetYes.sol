@@ -18,6 +18,7 @@ contract BetYesContract is ERC1155Holder {
         fpmm = IFixedProductMarketMaker(fpmmAddress);
         groupCRCToken = ERC20(_groupCRCToken);
         outcomeIndex = _outcomeIndex;
+        hub = IHub(_hubAddress);
 
         groupCRCToken.approve(fpmmAddress, type(uint256).max);
     }
@@ -28,7 +29,11 @@ contract BetYesContract is ERC1155Holder {
         emit DummyTriggered(tokenId, value);
     }
 
-    function placeBet(uint256 investmentAmount) public {
+    function placeBet(uint256 tokenId, uint256 investmentAmount) public {
+        // ToDo
+        //  1. Contract received ERC1155 tokens. It must wrap them before placing bet.
+        //  2. Call hub.wrap(_groupCRCToken)
+
         // authorize groupCRC
         console.log("1 place bet, investmentAmount", investmentAmount);
         uint256 allowance = groupCRCToken.allowance(address(this), address(fpmm));
@@ -53,18 +58,5 @@ contract BetYesContract is ERC1155Holder {
         if (id == 1) placeBet(value);
 
         return super.onERC1155Received(operator, from, id, value, data);
-    }
-
-    function onERC1155BatchReceived(
-        address operator,
-        address from,
-        uint256[] memory ids,
-        uint256[] memory values,
-        bytes memory data
-    ) public virtual override returns (bytes4) {
-        for (uint256 i = 0; i < ids.length; i++) {
-            dummy(ids[i], values[i]);
-        }
-        return super.onERC1155BatchReceived(operator, from, ids, values, data);
     }
 }
