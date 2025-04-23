@@ -5,46 +5,49 @@ import "./IFixedProductMarketMaker.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "forge-std/console.sol";
+import "circles-v2/hub/Hub.sol";
+import "circles-v2/lift/IERC20Lift.sol";
+
+import {console} from "forge-std/console.sol";
 
 contract BetYesContract is ERC1155Holder {
     IFixedProductMarketMaker public immutable fpmm;
-    ERC20 public immutable groupCRCToken;
+    //ERC20 public immutable groupCRCToken;
     uint256 public immutable outcomeIndex;
+    Hub public hub;
+    address groupCRCToken;
 
     //ToDo - balance per user for later redeem
 
-    constructor(address fpmmAddress, address _groupCRCToken, uint256 _outcomeIndex) {
+    constructor(address fpmmAddress, address _groupCRCToken, uint256 _outcomeIndex, address _hubAddress) {
         fpmm = IFixedProductMarketMaker(fpmmAddress);
-        groupCRCToken = ERC20(_groupCRCToken);
+        groupCRCToken = _groupCRCToken;
         outcomeIndex = _outcomeIndex;
-        hub = IHub(_hubAddress);
-
-        groupCRCToken.approve(fpmmAddress, type(uint256).max);
+        hub = Hub(_hubAddress);
     }
 
-    event DummyTriggered(uint256 tokenId, uint256 value);
-
-    function dummy(uint256 tokenId, uint256 value) internal {
-        emit DummyTriggered(tokenId, value);
-    }
-
-    function placeBet(uint256 tokenId, uint256 investmentAmount) public {
-        // ToDo
-        //  1. Contract received ERC1155 tokens. It must wrap them before placing bet.
-        //  2. Call hub.wrap(_groupCRCToken)
+    function placeBet(uint256 investmentAmount) public {
+        // Wrap received tokens
+        console.log("entered placebet, groupCRCToken", address(groupCRCToken));
+        // not needed
+        address erc20Group = hub.wrap(address(groupCRCToken), investmentAmount, CirclesType.Inflation);
+        console.log("erc20group inside placebet", address(erc20Group));
 
         // authorize groupCRC
         console.log("1 place bet, investmentAmount", investmentAmount);
-        uint256 allowance = groupCRCToken.allowance(address(this), address(fpmm));
+        uint256 allowance = ERC20(erc20Group).allowance(address(this), address(fpmm));
         console.log("allowance", allowance);
+        if (allowance < investmentAmount) {
+            ERC20(erc20Group).approve(address(fpmm), investmentAmount);
+        }
+        console.log("allowance after approve", allowance);
 
         console.log("fpmm", address(fpmm));
         uint256 expectedShares = fpmm.calcBuyAmount(investmentAmount, outcomeIndex);
         console.log("expected shares", expectedShares);
         // 1% slippage
         uint256 balance = ERC20(fpmm.collateralToken()).balanceOf(address(this));
-        console.log("wxdai balance", balance);
+        console.log("collateral balance", balance);
         fpmm.buy(investmentAmount, outcomeIndex, expectedShares * 99 / 100);
     }
 
@@ -54,9 +57,10 @@ contract BetYesContract is ERC1155Holder {
         override
         returns (bytes4)
     {
-        // ToDo - filter by ID properly (set constructor)
-        if (id == 1) placeBet(value);
+        console.log("entered onERC1155Received", id, value);
 
+        placeBet(value);
+        console.log("after placeBet");
         return super.onERC1155Received(operator, from, id, value, data);
     }
 }
