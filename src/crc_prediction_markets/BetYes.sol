@@ -74,6 +74,11 @@ contract BetYesContract is ERC1155Holder {
         balances[better] += expectedShares;
     }
 
+    function redeemAll() public {
+        // ToDo - Redeem from market, distribute to users
+        //https://gnosisscan.io/address/0xceafdd6bc0bef976fdcd1112955828e00543c0ce#code#L1409
+    }
+
     function onERC1155Received(address operator, address from, uint256 id, uint256 value, bytes memory data)
         public
         virtual
