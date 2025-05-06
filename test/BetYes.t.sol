@@ -65,13 +65,6 @@ contract BetYesTest is Test, GroupSetup, IHubErrors {
         vm.deal(address(betContract), 10 ether);
     }
 
-    // function testRegisterGroup() public {
-    //     // name our group
-    //     address group = addresses[35];
-    //     vm.startPrank(group);
-    //     hub.registerGroup(mintPolicy, "Group1", "G1", bytes32(0));
-    // }
-
     function testERC1155Triggered() public {
         console.log("entered testERC1155Triggered");
         // mint to group
@@ -99,6 +92,10 @@ contract BetYesTest is Test, GroupSetup, IHubErrors {
         console.log("bet yes contract", address(betContract));
         vm.prank(recipient);
         hub.safeTransferFrom(recipient, address(betContract), uint256(uint160(group)), amount, "");
+
+        // assert balance was updated
+        uint256 balance = betContract.balances(recipient);
+        assertGt(balance, 0);
     }
 
     function testGroupMint() public {
