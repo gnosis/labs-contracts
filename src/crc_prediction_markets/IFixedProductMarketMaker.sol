@@ -1,7 +1,10 @@
 pragma solidity ^0.8.0;
 
+import "./IConditionalTokens.sol";
+
 interface IFixedProductMarketMaker {
     // View functions
+    function conditionalTokens() external view returns (IConditionalTokens);
     function collectedFees() external view returns (uint256);
     function feesWithdrawableBy(address account) external view returns (uint256);
     function calcBuyAmount(uint256 investmentAmount, uint256 outcomeIndex) external view returns (uint256);

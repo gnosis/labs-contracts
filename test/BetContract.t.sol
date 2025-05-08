@@ -6,12 +6,12 @@ import {StdCheats} from "forge-std/StdCheats.sol";
 import "forge-std/console.sol";
 import "circles-v2-test/groups/groupSetup.sol";
 import "circles-v2/errors/Errors.sol";
-import "../src/crc_prediction_markets/BetYes.sol";
+import "../src/crc_prediction_markets/BetContract.sol";
 import "./mocks/MockFixedProductMarketMaker.sol";
 
-contract BetYesTest is Test, GroupSetup, IHubErrors {
+contract BetTest is Test, GroupSetup, IHubErrors {
     address group;
-    BetYesContract betContract;
+    BetContract betContract;
     uint256 constant TOKEN_ID = 1;
     uint256 constant AMOUNT = 100;
     uint256 constant mockOutcomeIndex = 0;
@@ -58,8 +58,8 @@ contract BetYesTest is Test, GroupSetup, IHubErrors {
             CONDITION_ID
         );
         fpmmMarketId = address(mockFPMM);
-        // Deploy BetYes contract with mock FPMM
-        betContract = new BetYesContract(fpmmMarketId, address(group), mockOutcomeIndex, address(hub));
+        // Deploy BetContract with mock FPMM
+        betContract = new BetContract(fpmmMarketId, address(group), mockOutcomeIndex, address(hub));
 
         // deposit wxdai
         vm.deal(address(betContract), 10 ether);
@@ -94,7 +94,7 @@ contract BetYesTest is Test, GroupSetup, IHubErrors {
         hub.safeTransferFrom(recipient, address(betContract), uint256(uint160(group)), amount, "");
 
         // assert balance was updated
-        uint256 balance = betContract.balances(recipient);
+        uint256 balance = betContract.balanceOf(recipient);
         assertGt(balance, 0);
     }
 
