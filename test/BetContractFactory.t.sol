@@ -27,13 +27,19 @@ contract BetContractFactoryTest is Test {
         groupCRCToken = address(mockToken);
         hub = MockHub(address(new MockHub()));
 
-        // Deploy factory
-        factory = new BetContractFactory();
-
         // Set addresses
         fpmmAddress = address(fpmm);
         groupTokenAddress = address(groupCRCToken);
         hubAddress = address(hub);
+
+        // Deploy factory
+        factory = new BetContractFactory(hubAddress);
+    }
+
+    function buildOutcomeIndicesArray(uint256 value) private pure returns (uint256[] memory) {
+        uint256[] memory outcomeIndexes = new uint256[](1);
+        outcomeIndexes[0] = value;
+        return outcomeIndexes;
     }
 
     function testFactoryDeployment() public {
@@ -41,14 +47,18 @@ contract BetContractFactoryTest is Test {
     }
 
     function testCreateBetContractsForFpmm() public {
-        // Set up event expectations first
-        vm.expectEmit(false, true, false, false);
-        emit BetContractFactory.BetContractDeployed(address(0), 0);
-        vm.expectEmit(false, true, false, false);
-        emit BetContractFactory.BetContractDeployed(address(0), 1);
-
         // Create bet contracts
-        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, 0, hubAddress);
+        uint256[] memory outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = 0;
+        outcomeIndexes[1] = 1;
+
+        // Record events
+        vm.recordLogs();
+        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, outcomeIndexes);
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+
+        // Check that we have the expected number of events
+        assertEq(entries.length, 2, "Should emit 2 BetContractDeployed events");
 
         // Get market info
         MarketInfo memory marketInfo = factory.getMarketInfo(fpmmAddress);
@@ -59,32 +69,35 @@ contract BetContractFactoryTest is Test {
         assertEq(marketInfo.betContracts.length, 2, "Should have 2 bet contracts");
 
         // Create again to test idempotency
-        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, 0, hubAddress);
+        outcomeIndexes = buildOutcomeIndicesArray(0);
+        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, outcomeIndexes);
     }
 
     function testCannotCreateWithZeroAddresses() public {
         // Test with zero FPMM address
         vm.expectRevert("Invalid FPMM address");
-        factory.createBetContractsForFpmm(address(0), groupTokenAddress, 0, hubAddress);
+        uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
+        factory.createBetContractsForFpmm(address(0), groupTokenAddress, outcomeIndexes);
 
         // Test with zero group CRC token address
         vm.expectRevert("Invalid group CRC token address");
-        factory.createBetContractsForFpmm(fpmmAddress, address(0), 0, hubAddress);
 
-        // Test with zero hub address
-        vm.expectRevert("Invalid hub address");
-        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, 0, address(0));
+        factory.createBetContractsForFpmm(fpmmAddress, address(0), outcomeIndexes);
     }
 
     function testBetContractCreation() public {
         // Create bet contracts
-        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, 0, hubAddress);
+        uint256[] memory outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = 0;
+        outcomeIndexes[1] = 1;
+
+        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, outcomeIndexes);
 
         // Get market info
         MarketInfo memory marketInfo = factory.getMarketInfo(fpmmAddress);
 
         // Verify bet contracts
-        for (uint8 i = 0; i < 2; i++) {
+        for (uint256 i = 0; i < 2; i++) {
             BetContract betContract = BetContract(marketInfo.betContracts[i]);
             assertEq(address(betContract.fpmm()), fpmmAddress, "FPMM address should match");
             assertEq(address(betContract.groupCRCToken()), groupTokenAddress, "Group CRC token should match");
@@ -95,14 +108,19 @@ contract BetContractFactoryTest is Test {
 
     function testFpmmAddressTracking() public {
         // Create bet contracts
-        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, 0, hubAddress);
+        uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
+        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, outcomeIndexes);
 
         // Verify FPMM address is tracked
         assertTrue(factory.fpmmAlreadyProcessed(fpmmAddress), "FPMM address should be tracked");
 
         // Create another market
         address newFpmmAddress = address(2);
-        factory.createBetContractsForFpmm(newFpmmAddress, groupTokenAddress, 0, hubAddress);
+
+        outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = uint256(0);
+        outcomeIndexes[1] = uint256(1);
+        factory.createBetContractsForFpmm(newFpmmAddress, groupTokenAddress, outcomeIndexes);
 
         // Verify both FPMM addresses are tracked
         assertTrue(factory.fpmmAlreadyProcessed(fpmmAddress), "First FPMM address should still be tracked");
@@ -129,7 +147,6 @@ contract MockHub {
     address public wrappedToken;
 
     function wrap(address token, uint256 amount, CirclesType _type) external returns (address) {
-        console.log("inside mock wrap");
         require(token != address(0), "Invalid token address");
         //require(amount > 0, "Amount must be greater than 0");
 

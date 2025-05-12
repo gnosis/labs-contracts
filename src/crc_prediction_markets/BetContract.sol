@@ -23,7 +23,7 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
     event Claimed(address indexed user, uint256 amount);
 
     IFixedProductMarketMaker public immutable fpmm;
-    //ERC20 public immutable groupCRCToken;
+
     uint256 public immutable outcomeIndex;
     Hub public hub;
     address public groupCRCToken;
@@ -48,11 +48,15 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
 
         erc20Group = hub.wrap(address(groupCRCToken), 0, CirclesType.Inflation);
 
-        // ToDo - Add fpmm identifier
-        string memory orgaName = "BetYes";
+        string memory orgaName = createCirclesOrganizationId(); // "BetYesBetYesBetYesBetYesBetYesBetYesBetYesBetYes";
         hub.registerOrganization(orgaName, bytes32(0));
         // This assures that this contract always receives group CRC tokens.
         hub.trust(_groupCRCToken, type(uint96).max);
+    }
+
+    function createCirclesOrganizationId() internal returns (string memory) {
+        bytes32 hash_ = keccak256(abi.encodePacked(fpmm, outcomeIndex));
+        return Strings.toHexString(uint256(hash_), 32);
     }
 
     function getERC20Address(address groupToken) public returns (address) {
@@ -82,35 +86,29 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         require(better != address(0), "Invalid better address");
         require(investmentAmount > 0, "Investment amount must be > 0");
 
-        // Wrap received tokens
-        console.log("entered placebet, groupCRCToken", address(groupCRCToken));
-
         uint256 balanceBeforeWrap = ERC20(erc20Group).balanceOf(address(this));
 
         hub.wrap(address(groupCRCToken), investmentAmount, CirclesType.Inflation);
-        console.log("erc20group inside placebet", address(erc20Group));
+
         // the balance will be greater than investmentAmount because demurrage not applied to inflationary tokens
         uint256 balanceAfterWrap = ERC20(erc20Group).balanceOf(address(this));
 
-        console.log("balanceAfterWrap", balanceAfterWrap);
         uint256 amountToBet = balanceAfterWrap - balanceBeforeWrap;
         require(amountToBet > 0, "Wrap did not yield bettable tokens");
 
         // authorize groupCRC
-        console.log("1 place bet, amountToBet", amountToBet);
+
         uint256 allowance = ERC20(erc20Group).allowance(address(this), address(fpmm));
-        console.log("allowance", allowance);
+
         if (allowance < amountToBet) {
             ERC20(erc20Group).approve(address(fpmm), amountToBet);
         }
-        console.log("allowance after approve", allowance);
 
-        console.log("fpmm", address(fpmm));
         uint256 expectedShares = fpmm.calcBuyAmount(amountToBet, outcomeIndex);
-        console.log("expected shares", expectedShares);
+
         // 1% slippage
         uint256 balance = ERC20(fpmm.collateralToken()).balanceOf(address(this));
-        console.log("collateral balance", balance);
+
         fpmm.buy(amountToBet, outcomeIndex, expectedShares * 99 / 100);
 
         // update balances
@@ -122,8 +120,6 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
     }
 
     function updateBalance(address better, uint256 expectedShares) internal {
-        console.log("called UpdateBalance better", better);
-        console.log("called UpdateBalance expectedShares", expectedShares);
         (bool exists, uint256 currentBalance) = _balances.tryGet(better);
         uint256 newBalance = exists ? currentBalance + expectedShares : expectedShares;
         _balances.set(better, newBalance);
@@ -142,7 +138,7 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
 
         // Remove all elements one by one (see https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableMap-clear-struct-EnumerableMap-AddressToBytes32Map-)
         uint256 length = _balances.length();
-        console.log("balance length", length);
+
         for (uint256 i = 0; i < length; i++) {
             // Since we're removing elements, we always look at index 0
             (address key,) = _balances.at(0);
@@ -189,14 +185,10 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         override
         returns (bytes4)
     {
-        console.log("entered onERC1155Received", id, value);
         // We only place bet if we received groupCRC tokens
         if (groupCRCToken == address(uint160(id))) {
             placeBet(value, from);
-            console.log("after placeBet");
         }
-
-        console.log("end onERC1155Received");
 
         return super.onERC1155Received(operator, from, id, value, data);
     }
