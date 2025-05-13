@@ -8,9 +8,6 @@ runs:
     - name: Init and update git submodules
       run: git submodule update --init --recursive
       shell: bash
-    - name: List lib directory
-      run: ls -R lib/circles-contracts-v2
-      shell: bash
     - name: Run Forge build
       shell: bash
       run: forge build
