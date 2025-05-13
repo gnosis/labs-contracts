@@ -5,6 +5,10 @@ runs:
   steps:
     - name: Install Foundry
       uses: foundry-rs/foundry-toolchain@v1
+    - name: Init and update git submodules
+      run: git submodule update --init --recursive
+    - name: List lib directory
+      run: ls -R lib/circles-contracts-v2
     - name: Run Forge build
       shell: bash
       run: forge build
