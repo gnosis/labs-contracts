@@ -32,31 +32,52 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
     // outcome token balances
     EnumerableMap.AddressToUintMap private _balances;
     uint256 private _totalSupply;
+    // organization ID for Circles registration
+    uint256 betContractIdentifier;
 
     mapping(address => uint256) public claimable;
 
-    constructor(address fpmmAddress, address _groupCRCToken, uint256 _outcomeIndex, address _hubAddress) {
+    constructor(
+        address fpmmAddress,
+        address _groupCRCToken,
+        uint256 _outcomeIndex,
+        address _hubAddress,
+        uint256 _betContractIdentifier
+    ) {
+        console.log("inside BetContract constructor");
         require(fpmmAddress != address(0), "Invalid FPMM address");
         require(_groupCRCToken != address(0), "Invalid group CRC token address");
         require(_hubAddress != address(0), "Invalid hub address");
+        console.log("1");
 
         fpmm = IFixedProductMarketMaker(fpmmAddress);
         groupCRCToken = _groupCRCToken;
         outcomeIndex = _outcomeIndex;
-
         hub = Hub(_hubAddress);
+        betContractIdentifier = _betContractIdentifier;
+        console.log("2");
 
         erc20Group = hub.wrap(address(groupCRCToken), 0, CirclesType.Inflation);
+        console.log("3");
 
-        string memory orgaName = createCirclesOrganizationId(); // "BetYesBetYesBetYesBetYesBetYesBetYesBetYesBetYes";
+        string memory orgaName = createCirclesOrganizationId();
+        console.log("4", orgaName);
+        bytes memory nameBytes = bytes(orgaName);
+        console.log("name bytes", nameBytes.length);
+        //if (nameBytes.length > 32 || nameBytes.length == 0) return false; // Check length
         hub.registerOrganization(orgaName, bytes32(0));
         // This assures that this contract always receives group CRC tokens.
+        console.log("before hub trust");
         hub.trust(_groupCRCToken, type(uint96).max);
+        console.log("end BetContract constructor");
     }
 
-    function createCirclesOrganizationId() internal returns (string memory) {
-        bytes32 hash_ = keccak256(abi.encodePacked(fpmm, outcomeIndex));
-        return Strings.toHexString(uint256(hash_), 32);
+    function createCirclesOrganizationId() internal view returns (string memory) {
+        string memory organizationId = string.concat(
+            "Bet contract #", Strings.toString(betContractIdentifier), " - outcome ", Strings.toString(outcomeIndex)
+        );
+        console.log("organizationId", organizationId);
+        return organizationId;
     }
 
     function getERC20Address(address groupToken) public returns (address) {

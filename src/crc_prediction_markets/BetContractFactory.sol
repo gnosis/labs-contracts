@@ -28,6 +28,11 @@ contract BetContractFactory {
 
     EnumerableSet.AddressSet private fpmmAddresses;
 
+    // Public function to return all processed FPMM addresses
+    function getAllProcessedFPMMAddresses() external view returns (address[] memory) {
+        return fpmmAddresses.values();
+    }
+
     function getMarketInfo(address fpmmAddress) public view returns (MarketInfo memory) {
         return fpmmToBetContracts[fpmmAddress];
     }
@@ -36,11 +41,15 @@ contract BetContractFactory {
         return fpmmAddresses.contains(fpmmAddress);
     }
 
-    function createBetContract(address fpmmAddress, address groupCRCToken, uint256 outcomeIndex, address hubAddress)
-        private
-        returns (address)
-    {
-        BetContract betContract = new BetContract(fpmmAddress, groupCRCToken, outcomeIndex, hubAddress);
+    function createBetContract(
+        address fpmmAddress,
+        address groupCRCToken,
+        uint256 outcomeIndex,
+        address hubAddress,
+        uint256 betContractIdentifier
+    ) private returns (address) {
+        BetContract betContract =
+            new BetContract(fpmmAddress, groupCRCToken, outcomeIndex, hubAddress, betContractIdentifier);
         emit BetContractDeployed(address(betContract), outcomeIndex);
 
         return address(betContract);
@@ -53,10 +62,13 @@ contract BetContractFactory {
         if (!fpmmAddresses.contains(fpmmAddress)) {
             // We assume binary markets, hence 2 outcomes
 
+            uint256 betContractIdentifier = fpmmAddresses.length();
+
             address[] memory betContracts = new address[](outcomeIndexes.length);
             for (uint8 outcomeIdx = 0; outcomeIdx < outcomeIndexes.length; outcomeIdx++) {
-                address betContractAddr =
-                    createBetContract(fpmmAddress, groupCRCToken, outcomeIndexes[outcomeIdx], hubAddress);
+                address betContractAddr = createBetContract(
+                    fpmmAddress, groupCRCToken, outcomeIndexes[outcomeIdx], hubAddress, betContractIdentifier
+                );
                 betContracts[outcomeIdx] = betContractAddr;
             }
 

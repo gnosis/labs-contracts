@@ -59,7 +59,7 @@ contract BetTest is Test, GroupSetup, IHubErrors {
         );
         fpmmMarketId = address(mockFPMM);
         // Deploy BetContract with mock FPMM
-        betContract = new BetContract(fpmmMarketId, address(group), mockOutcomeIndex, address(hub));
+        betContract = new BetContract(fpmmMarketId, address(group), mockOutcomeIndex, address(hub), 1);
 
         // deposit wxdai
         vm.deal(address(betContract), 10 ether);
