@@ -5,6 +5,9 @@ runs:
   steps:
     - name: Install Foundry
       uses: foundry-rs/foundry-toolchain@v1
+    - name: Init and update git submodules
+      run: git submodule update --init --recursive
+      shell: bash
     - name: Run Forge build
       shell: bash
       run: forge build
