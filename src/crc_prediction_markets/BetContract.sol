@@ -42,34 +42,25 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         address _groupCRCToken,
         uint256 _outcomeIndex,
         address _hubAddress,
-        uint256 _betContractIdentifier
+        uint256 _betContractIdentifier,
+        string memory _organizationName,
+        bytes32 _organizationMetadataDigest
     ) {
-        console.log("inside BetContract constructor");
         require(fpmmAddress != address(0), "Invalid FPMM address");
         require(_groupCRCToken != address(0), "Invalid group CRC token address");
         require(_hubAddress != address(0), "Invalid hub address");
-        console.log("1");
 
         fpmm = IFixedProductMarketMaker(fpmmAddress);
         groupCRCToken = _groupCRCToken;
         outcomeIndex = _outcomeIndex;
         hub = Hub(_hubAddress);
         betContractIdentifier = _betContractIdentifier;
-        console.log("2");
 
         erc20Group = hub.wrap(address(groupCRCToken), 0, CirclesType.Inflation);
-        console.log("3");
 
-        string memory orgaName = createCirclesOrganizationId();
-        console.log("4", orgaName);
-        bytes memory nameBytes = bytes(orgaName);
-        console.log("name bytes", nameBytes.length);
-        //if (nameBytes.length > 32 || nameBytes.length == 0) return false; // Check length
-        hub.registerOrganization(orgaName, bytes32(0));
+        hub.registerOrganization(_organizationName, _organizationMetadataDigest);
         // This assures that this contract always receives group CRC tokens.
-        console.log("before hub trust");
         hub.trust(_groupCRCToken, type(uint96).max);
-        console.log("end BetContract constructor");
     }
 
     function createCirclesOrganizationId() internal view returns (string memory) {
@@ -89,7 +80,7 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         return exists ? balance : 0;
     }
 
-    function getAddressesWithPositiveBalance() public view returns (address[] memory) {
+    function getAddressesWithBalanceGreaterThan0() public view returns (address[] memory) {
         uint256 length = _balances.length();
         address[] memory addresses = new address[](length);
 
@@ -171,7 +162,7 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         /**
          * Anyone can call this to calculate the shars of each user. This can (but need not be) called multiple times, once is sufficient to distribute earnings.
          */
-        address[] memory addresses = getAddressesWithPositiveBalance();
+        address[] memory addresses = getAddressesWithBalanceGreaterThan0();
 
         IERC20 erc20GroupToken = IERC20(erc20Group);
         uint256 totalCollateralToTransfer = erc20GroupToken.balanceOf(address(this));

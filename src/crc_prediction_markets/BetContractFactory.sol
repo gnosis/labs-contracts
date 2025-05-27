@@ -45,29 +45,44 @@ contract BetContractFactory {
         address fpmmAddress,
         address groupCRCToken,
         uint256 outcomeIndex,
-        address hubAddress,
-        uint256 betContractIdentifier
+        uint256 betContractIdentifier,
+        string memory organizationName,
+        bytes32 organizationMetadataDigest
     ) private returns (address) {
-        BetContract betContract =
-            new BetContract(fpmmAddress, groupCRCToken, outcomeIndex, hubAddress, betContractIdentifier);
+        BetContract betContract = new BetContract(
+            fpmmAddress,
+            groupCRCToken,
+            outcomeIndex,
+            hubAddress,
+            betContractIdentifier,
+            organizationName,
+            organizationMetadataDigest
+        );
         emit BetContractDeployed(address(betContract), outcomeIndex);
 
         return address(betContract);
     }
 
-    function createBetContractsForFpmm(address fpmmAddress, address groupCRCToken, uint256[] memory outcomeIndexes)
-        external
-    {
+    function createBetContractsForFpmm(
+        address fpmmAddress,
+        address groupCRCToken,
+        uint256[] memory outcomeIndexes,
+        string[] memory organizationNames,
+        bytes32[] memory organizationMetadataDigests
+    ) external {
         // Create market if it doesn't exist
         if (!fpmmAddresses.contains(fpmmAddress)) {
-            // We assume binary markets, hence 2 outcomes
-
             uint256 betContractIdentifier = fpmmAddresses.length();
 
             address[] memory betContracts = new address[](outcomeIndexes.length);
             for (uint8 outcomeIdx = 0; outcomeIdx < outcomeIndexes.length; outcomeIdx++) {
                 address betContractAddr = createBetContract(
-                    fpmmAddress, groupCRCToken, outcomeIndexes[outcomeIdx], hubAddress, betContractIdentifier
+                    fpmmAddress,
+                    groupCRCToken,
+                    outcomeIndexes[outcomeIdx],
+                    betContractIdentifier,
+                    organizationNames[outcomeIdx],
+                    organizationMetadataDigests[outcomeIdx]
                 );
                 betContracts[outcomeIdx] = betContractAddr;
             }

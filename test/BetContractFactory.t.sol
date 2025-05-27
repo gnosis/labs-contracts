@@ -54,7 +54,9 @@ contract BetContractFactoryTest is Test {
 
         // Record events
         vm.recordLogs();
-        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, outcomeIndexes);
+        factory.createBetContractsForFpmm(
+            fpmmAddress, groupTokenAddress, outcomeIndexes, buildOrganizationNames(), buildOrganizationMetadataDigests()
+        );
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // Check that we have the expected number of events
@@ -70,19 +72,28 @@ contract BetContractFactoryTest is Test {
 
         // Create again to test idempotency
         outcomeIndexes = buildOutcomeIndicesArray(0);
-        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, outcomeIndexes);
+
+        factory.createBetContractsForFpmm(
+            fpmmAddress, groupTokenAddress, outcomeIndexes, buildOrganizationNames(), buildOrganizationMetadataDigests()
+        );
     }
 
     function testCannotCreateWithZeroAddresses() public {
         // Test with zero FPMM address
         vm.expectRevert("Invalid FPMM address");
         uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
-        factory.createBetContractsForFpmm(address(0), groupTokenAddress, outcomeIndexes);
+        bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
+        string[] memory organizationNames = buildOrganizationNames();
+        factory.createBetContractsForFpmm(
+            address(0), groupTokenAddress, outcomeIndexes, organizationNames, organizationMetadataDigests
+        );
 
         // Test with zero group CRC token address
         vm.expectRevert("Invalid group CRC token address");
 
-        factory.createBetContractsForFpmm(fpmmAddress, address(0), outcomeIndexes);
+        factory.createBetContractsForFpmm(
+            fpmmAddress, address(0), outcomeIndexes, organizationNames, organizationMetadataDigests
+        );
     }
 
     function testBetContractCreation() public {
@@ -91,7 +102,9 @@ contract BetContractFactoryTest is Test {
         outcomeIndexes[0] = 0;
         outcomeIndexes[1] = 1;
 
-        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, outcomeIndexes);
+        factory.createBetContractsForFpmm(
+            fpmmAddress, groupTokenAddress, outcomeIndexes, buildOrganizationNames(), buildOrganizationMetadataDigests()
+        );
 
         // Get market info
         MarketInfo memory marketInfo = factory.getMarketInfo(fpmmAddress);
@@ -106,10 +119,28 @@ contract BetContractFactoryTest is Test {
         }
     }
 
+    function buildOrganizationNames() private pure returns (string[] memory) {
+        string[] memory organizationNames = new string[](2);
+        organizationNames[0] = "Organization 1";
+        organizationNames[1] = "Organization 2";
+        return organizationNames;
+    }
+
+    function buildOrganizationMetadataDigests() private pure returns (bytes32[] memory) {
+        bytes32[] memory organizationMetadataDigests = new bytes32[](2);
+        organizationMetadataDigests[0] = bytes32(0);
+        organizationMetadataDigests[1] = bytes32(0);
+        return organizationMetadataDigests;
+    }
+
     function testFpmmAddressTracking() public {
         // Create bet contracts
         uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
-        factory.createBetContractsForFpmm(fpmmAddress, groupTokenAddress, outcomeIndexes);
+        bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
+        string[] memory organizationNames = buildOrganizationNames();
+        factory.createBetContractsForFpmm(
+            fpmmAddress, groupTokenAddress, outcomeIndexes, organizationNames, organizationMetadataDigests
+        );
 
         // Verify FPMM address is tracked
         assertTrue(factory.fpmmAlreadyProcessed(fpmmAddress), "FPMM address should be tracked");
@@ -120,7 +151,10 @@ contract BetContractFactoryTest is Test {
         outcomeIndexes = new uint256[](2);
         outcomeIndexes[0] = uint256(0);
         outcomeIndexes[1] = uint256(1);
-        factory.createBetContractsForFpmm(newFpmmAddress, groupTokenAddress, outcomeIndexes);
+
+        factory.createBetContractsForFpmm(
+            newFpmmAddress, groupTokenAddress, outcomeIndexes, organizationNames, organizationMetadataDigests
+        );
 
         // Verify both FPMM addresses are tracked
         assertTrue(factory.fpmmAlreadyProcessed(fpmmAddress), "First FPMM address should still be tracked");
