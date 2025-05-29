@@ -1,0 +1,16 @@
+type OmenAgentResultMapping_PredictionAdded {
+  id: ID!
+  marketAddress: String!
+  estimatedProbabilityBps: BigInt!
+  publisherAddress: String!
+  txHashes: [String!]!
+  ipfsHash: String!
+}
+
+type OmenThumbnailMapping_ImageUpdated {
+  id: ID!
+  marketAddress: String!
+  image_hash: String!
+  changer: String!
+}
+

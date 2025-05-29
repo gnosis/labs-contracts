@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: envio-subgraphs
+networks:
+- id: 100
+  start_block: 0
+  contracts:
+  - name: OmenAgentResultMapping
+    address:
+    - 0x260E1077dEA98e738324A6cEfB0EE9A272eD471a
+    handler: src/EventHandlers.ts
+    events:
+    - event: PredictionAdded(address indexed marketAddress, uint16 estimatedProbabilityBps, address indexed publisherAddress, bytes32[] txHashes, bytes32 ipfsHash)
+  - name: OmenThumbnailMapping
+    address:
+    - 0xe0cf08311F03850497B0ed6A2cf067f1750C3eFc
+    handler: src/EventHandlers.ts
+    events:
+    - event: ImageUpdated(address indexed marketAddress, bytes32 image_hash, address indexed changer)
+unordered_multichain_mode: true
