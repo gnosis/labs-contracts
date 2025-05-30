@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {BaseGuard} from "safe-contracts/base/GuardManager.sol";
 import {Enum} from "safe-contracts/common/Enum.sol";
+import "forge-std/console.sol";
 
 contract NoSingleSignedTransactionGuard is BaseGuard {
     error SingleSignedTransactionNotAllowed();
@@ -22,11 +23,18 @@ contract NoSingleSignedTransactionGuard is BaseGuard {
         bytes memory signatures,
         address /*msgSender*/
     ) external pure {
+        // ToDo - check if agent's signature is involved, if only humans, always allow
+        console.log("signatures.length", signatures.length);
         uint256 numberOfSignatures = signatures.length / 65;
-
+        console.log("numberOfSignatures", numberOfSignatures);
         if (numberOfSignatures < 2) {
+            console.log("entered revert");
             revert SingleSignedTransactionNotAllowed();
         }
+    }
+
+    function dummyReverter() external pure {
+        revert SingleSignedTransactionNotAllowed();
     }
 
     function checkAfterExecution(bytes32 txHash, bool success) external pure {}

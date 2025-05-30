@@ -19,6 +19,7 @@ contract NoSingleSignedTransactionGuardTest is Test, SafeTestTools {
     uint256 constant threshold = 1;
 
     function setUp() public {
+        console.log("entered setup");
         uint256[] memory ownerPKs = new uint256[](3);
         ownerPKs[0] = 0x1;
         ownerPKs[1] = 0x2;
@@ -30,10 +31,47 @@ contract NoSingleSignedTransactionGuardTest is Test, SafeTestTools {
 
         // Deploy guard
         guard = new NoSingleSignedTransactionGuard();
+        console.log("guard address", address(guard));
 
         // Set the guard in the safe
         bytes memory setGuardData = abi.encodeWithSelector(GuardManager.setGuard.selector, address(guard));
-        safeInstance.execTransaction({to: address(safeInstance.safe), value: 0, data: setGuardData});
+        // Set the guard in the safe
+
+        // safeInstance.execTransaction({to: address(safeInstance.safe), value: 0, data: setGuardData});
+        // Execute with all signatures to ensure the guard is properly set
+        bytes memory signatures = _createSignatures(
+            3,
+            safeInstance,
+            address(safeInstance.safe),
+            0,
+            setGuardData,
+            Enum.Operation.Call,
+            0,
+            0,
+            0,
+            address(0),
+            address(0)
+        );
+
+        SafeTestLib.execTransaction(
+            safeInstance,
+            address(safeInstance.safe),
+            0,
+            setGuardData,
+            Enum.Operation.Call,
+            0,
+            0,
+            0,
+            address(0),
+            address(0),
+            signatures
+        );
+        console.log("finish setup");
+    }
+
+    function testDummy() public {
+        vm.expectRevert(NoSingleSignedTransactionGuard.SingleSignedTransactionNotAllowed.selector);
+        guard.dummyReverter();
     }
 
     function testCannotExecuteWithSingleSignature() public {
@@ -41,9 +79,42 @@ contract NoSingleSignedTransactionGuardTest is Test, SafeTestTools {
             1, safeInstance, alice, 0.5 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), address(0)
         );
         vm.expectRevert(NoSingleSignedTransactionGuard.SingleSignedTransactionNotAllowed.selector);
+
+        // SafeTestLib.execTransaction(
+        //     safeInstance, alice, 0.5 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), address(0), signatures
+        // );
         SafeTestLib.execTransaction(
-            safeInstance, alice, 0.5 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), address(0), signatures
+            safeInstance,
+            address(safeInstance.safe),
+            0.5 ether,
+            "",
+            Enum.Operation.Call,
+            0,
+            0,
+            0,
+            address(0),
+            address(0),
+            signatures
         );
+    }
+
+    function testCanExecuteWithOnlyOneSignature123() public {
+        console.log("testCanExecuteWithOnlyOneSignature123 start");
+
+        // Get the current nonce first
+        uint256 nonce = safeInstance.safe.nonce();
+
+        bytes memory signatures = _createSignatures(
+            1, safeInstance, alice, 0.5 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), address(0)
+        );
+        console.log("test signatures", signatures.length);
+        vm.expectRevert(NoSingleSignedTransactionGuard.SingleSignedTransactionNotAllowed.selector);
+        safeInstance.safe.execTransaction(
+            alice, 0.5 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), signatures
+        );
+
+        console.log("finish exec tx", signatures.length);
+        assertEq(alice.balance, 0);
     }
 
     function testCanExecuteWithTwoSignatures() public {
