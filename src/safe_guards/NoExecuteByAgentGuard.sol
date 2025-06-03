@@ -6,13 +6,17 @@ import {Enum} from "safe-contracts/common/Enum.sol";
 import "forge-std/console.sol";
 
 /**
- * @title NoSingleSignedTransactionGuard
- * @notice Guard that prevents execution of transactions with only a single signature.
+ * @title NoExecuteByAgentGuard
+ * @notice Add this guard along with addition of the agent as a co-signer, to prevent him from executing transactions on the contract level, no matter if threshold is met or not.
  */
-contract NoSingleSignedTransactionGuard is BaseGuard {
-    error SingleSignedTransactionNotAllowed();
+contract NoExecuteByAgentGuard is BaseGuard {
+    error ExecutionByAgentNotAllowed();
 
-    constructor() {}
+    address public immutable agent;
+
+    constructor(address _agent) {
+        agent = _agent;
+    }
 
     function checkTransaction(
         address, /*to*/
@@ -24,12 +28,11 @@ contract NoSingleSignedTransactionGuard is BaseGuard {
         uint256, /*gasPrice*/
         address, /*gasToken*/
         address payable, /*refundReceiver*/
-        bytes memory signatures,
-        address /*msgSender*/
-    ) external pure {
-        uint256 numberOfSignatures = signatures.length / 65;
-        if (numberOfSignatures < 2) {
-            revert SingleSignedTransactionNotAllowed();
+        bytes memory, /*signatures*/
+        address msgSender
+    ) external view {
+        if (msgSender == agent) {
+            revert ExecutionByAgentNotAllowed();
         }
     }
 
