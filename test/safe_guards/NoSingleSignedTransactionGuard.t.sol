@@ -21,9 +21,10 @@ contract NoSingleSignedTransactionGuardTest is Test, SafeTestTools {
 
     function setUp() public {
         uint256[] memory ownerPKs = new uint256[](3);
-        ownerPKs[0] = 0x1;
+        // Write them in DESC order, because setupSafe will sort them anyways, and then you can not rely on indexing them.
+        ownerPKs[0] = 0x3;
         ownerPKs[1] = 0x2;
-        ownerPKs[2] = 0x3;
+        ownerPKs[2] = 0x1;
         safeInstance = _setupSafe(ownerPKs, threshold);
 
         // Save one of the owners

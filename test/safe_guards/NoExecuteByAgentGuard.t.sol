@@ -22,8 +22,9 @@ contract NoExecuteByAgentGuardTest is Test, SafeTestTools {
 
     function setUp() public {
         uint256[] memory ownerPKs = new uint256[](2);
-        ownerPKs[0] = 0x1;
-        ownerPKs[1] = 0x2;
+        // Write them in DESC order, because setupSafe will sort them anyways, and then you can not rely on indexing them.
+        ownerPKs[0] = 0x2;
+        ownerPKs[1] = 0x1;
         safeInstance = _setupSafe(ownerPKs, threshold);
 
         // Save one of the owners as alice, another as agent
