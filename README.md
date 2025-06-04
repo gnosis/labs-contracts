@@ -122,3 +122,26 @@ Before working with graphs, you need to run `forge build` in the root directory.
 The sequence of commands is `codegen -> build -> test -> deploy`.
 
 (On MacOS Sonoma, running the tests in the docker mode is required: https://github.com/LimeChain/matchstick/issues/421)
+
+## Set Envio deployment
+
+We deploy the subgraph on `graphs/envio-subgraphs` to Envio.
+One can run 
+
+### Start subgraph locally
+
+Make sure Docker is running locally
+
+```shell
+pnpm run dev
+```
+
+and to stop
+```
+pnpm envio stop
+```
+
+### Deploy subgraph
+
+The subgraph is already connected to Envio. If changes need to be made, simply commit and push to the envio branch (use Envio API Key).
+Note that every time a new deployment is done, the indexer URL changes, thus changing this in [PMAT](https://github.com/gnosis/prediction-market-agent-tooling) is necessary.
