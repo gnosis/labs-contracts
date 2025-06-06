@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "./BetContract.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "./LiquidityRemover.sol";
+import "./LiquidityAdder.sol";
 
 // Struct to store market information
 struct MarketInfo {
@@ -16,9 +18,12 @@ contract BetContractFactory {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address public hubAddress;
+    // for holding LP shares of fixed product market makers
+    LiquidityVaultToken public liquidityVaultToken;
 
     constructor(address _hubAddress) {
         hubAddress = _hubAddress;
+        liquidityVaultToken = new LiquidityVaultToken();
     }
 
     event BetContractDeployed(address indexed betContract, uint256 indexed outcomeIndex);
@@ -47,7 +52,8 @@ contract BetContractFactory {
         uint256 outcomeIndex,
         uint256 betContractIdentifier,
         string memory organizationName,
-        bytes32 organizationMetadataDigest
+        bytes32 organizationMetadataDigest,
+        address liquidityRemover
     ) private returns (address) {
         BetContract betContract = new BetContract(
             fpmmAddress,
@@ -56,7 +62,8 @@ contract BetContractFactory {
             hubAddress,
             betContractIdentifier,
             organizationName,
-            organizationMetadataDigest
+            organizationMetadataDigest,
+            address(liquidityRemover)
         );
         emit BetContractDeployed(address(betContract), outcomeIndex);
 
@@ -67,12 +74,21 @@ contract BetContractFactory {
         address fpmmAddress,
         address groupCRCToken,
         uint256[] memory outcomeIndexes,
+        bytes32[] memory conditionIds,
         string[] memory organizationNames,
         bytes32[] memory organizationMetadataDigests
     ) external {
         // Create market if it doesn't exist
         if (!fpmmAddresses.contains(fpmmAddress)) {
             uint256 betContractIdentifier = fpmmAddresses.length();
+
+            LiquidityRemover liquidityRemover = new LiquidityRemover(
+                fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), address(this), conditionIds
+            );
+
+            LiquidityAdder liquidityAdder = new LiquidityAdder(
+                fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), conditionIds.length
+            );
 
             address[] memory betContracts = new address[](outcomeIndexes.length);
             for (uint8 outcomeIdx = 0; outcomeIdx < outcomeIndexes.length; outcomeIdx++) {
@@ -82,7 +98,8 @@ contract BetContractFactory {
                     outcomeIndexes[outcomeIdx],
                     betContractIdentifier,
                     organizationNames[outcomeIdx],
-                    organizationMetadataDigests[outcomeIdx]
+                    organizationMetadataDigests[outcomeIdx],
+                    address(liquidityRemover)
                 );
                 betContracts[outcomeIdx] = betContractAddr;
             }

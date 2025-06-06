@@ -20,6 +20,8 @@ contract BetContractFactoryTest is Test {
     address groupTokenAddress;
     address hubAddress;
 
+    bytes32[] conditionIds;
+
     function setUp() public {
         // Deploy mock contracts
         fpmm = IFixedProductMarketMaker(address(new MockFixedProductMarketMaker()));
@@ -32,8 +34,16 @@ contract BetContractFactoryTest is Test {
         groupTokenAddress = address(groupCRCToken);
         hubAddress = address(hub);
 
+        conditionIds = buildMockConditionIds();
+
         // Deploy factory
         factory = new BetContractFactory(hubAddress);
+    }
+
+    function buildMockConditionIds() private pure returns (bytes32[] memory) {
+        bytes32[] memory _conditionIds = new bytes32[](1);
+        _conditionIds[0] = bytes32(0);
+        return _conditionIds;
     }
 
     function buildOutcomeIndicesArray(uint256 value) private pure returns (uint256[] memory) {
@@ -55,7 +65,12 @@ contract BetContractFactoryTest is Test {
         // Record events
         vm.recordLogs();
         factory.createBetContractsForFpmm(
-            fpmmAddress, groupTokenAddress, outcomeIndexes, buildOrganizationNames(), buildOrganizationMetadataDigests()
+            fpmmAddress,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
@@ -74,7 +89,12 @@ contract BetContractFactoryTest is Test {
         outcomeIndexes = buildOutcomeIndicesArray(0);
 
         factory.createBetContractsForFpmm(
-            fpmmAddress, groupTokenAddress, outcomeIndexes, buildOrganizationNames(), buildOrganizationMetadataDigests()
+            fpmmAddress,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
     }
 
@@ -85,14 +105,14 @@ contract BetContractFactoryTest is Test {
         bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
         string[] memory organizationNames = buildOrganizationNames();
         factory.createBetContractsForFpmm(
-            address(0), groupTokenAddress, outcomeIndexes, organizationNames, organizationMetadataDigests
+            address(0), groupTokenAddress, outcomeIndexes, conditionIds, organizationNames, organizationMetadataDigests
         );
 
         // Test with zero group CRC token address
         vm.expectRevert("Invalid group CRC token address");
 
         factory.createBetContractsForFpmm(
-            fpmmAddress, address(0), outcomeIndexes, organizationNames, organizationMetadataDigests
+            fpmmAddress, address(0), outcomeIndexes, conditionIds, organizationNames, organizationMetadataDigests
         );
     }
 
@@ -103,7 +123,12 @@ contract BetContractFactoryTest is Test {
         outcomeIndexes[1] = 1;
 
         factory.createBetContractsForFpmm(
-            fpmmAddress, groupTokenAddress, outcomeIndexes, buildOrganizationNames(), buildOrganizationMetadataDigests()
+            fpmmAddress,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
 
         // Get market info
@@ -139,7 +164,7 @@ contract BetContractFactoryTest is Test {
         bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
         string[] memory organizationNames = buildOrganizationNames();
         factory.createBetContractsForFpmm(
-            fpmmAddress, groupTokenAddress, outcomeIndexes, organizationNames, organizationMetadataDigests
+            fpmmAddress, groupTokenAddress, outcomeIndexes, conditionIds, organizationNames, organizationMetadataDigests
         );
 
         // Verify FPMM address is tracked
@@ -153,7 +178,12 @@ contract BetContractFactoryTest is Test {
         outcomeIndexes[1] = uint256(1);
 
         factory.createBetContractsForFpmm(
-            newFpmmAddress, groupTokenAddress, outcomeIndexes, organizationNames, organizationMetadataDigests
+            newFpmmAddress,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            organizationNames,
+            organizationMetadataDigests
         );
 
         // Verify both FPMM addresses are tracked

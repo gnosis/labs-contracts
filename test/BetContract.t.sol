@@ -8,6 +8,7 @@ import "circles-v2-test/groups/groupSetup.sol";
 import "circles-v2/errors/Errors.sol";
 import "../src/crc_prediction_markets/BetContract.sol";
 import "./mocks/MockFixedProductMarketMaker.sol";
+import "../src/crc_prediction_markets/LiquidityVaultToken.sol";
 
 contract BetTest is Test, GroupSetup, IHubErrors {
     address group;
@@ -20,6 +21,8 @@ contract BetTest is Test, GroupSetup, IHubErrors {
     // market also has a condition_id, outcome_slot_count
     //address constant fpmmMarketId = address(0x011F45E9DC3976159edf0395C0Cd284df91F59Bc);
     address fpmmMarketId;
+
+    LiquidityVaultToken liquidityVaultToken;
 
     constructor() GroupSetup() {}
 
@@ -58,9 +61,20 @@ contract BetTest is Test, GroupSetup, IHubErrors {
             CONDITION_ID
         );
         fpmmMarketId = address(mockFPMM);
+
+        // liquidity vault
+        liquidityVaultToken = new LiquidityVaultToken();
+
         // Deploy BetContract with mock FPMM
         betContract = new BetContract(
-            fpmmMarketId, address(group), mockOutcomeIndex, address(hub), 1, "Organization1", bytes32(0)
+            fpmmMarketId,
+            address(group),
+            mockOutcomeIndex,
+            address(hub),
+            1,
+            "Organization1",
+            bytes32(0),
+            address(liquidityVaultToken)
         );
 
         // deposit wxdai

@@ -59,7 +59,7 @@ contract OmenThumbnailMappingTest is Test {
         assertEq(omenThumbnailMapping.get(address(productMarketMaker)), "Qm456");
     }
 
-    function testNonSetImageIsEqualToNullBytes32() public {
+    function testNonSetImageIsEqualToNullBytes32() public view {
         assertEq(omenThumbnailMapping.get(address(productMarketMaker)), bytes32(0));
     }
 

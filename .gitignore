@@ -15,3 +15,8 @@ docs/
 
 # Dotenv file
 .env
+
+graphs/envio-subgraphs/generated/
+graphs/envio-subgraphs/node_modules/
+graphs/omen-agentresultmapping/node_modules/
+graphs/omen-thumbnailmapping/node_modules/

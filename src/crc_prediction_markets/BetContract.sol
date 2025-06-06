@@ -12,8 +12,11 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import "circles-v2/hub/Hub.sol";
 import "circles-v2/lift/IERC20Lift.sol";
+import "./utils/BettingUtils.sol";
 
 import {console} from "forge-std/console.sol";
+
+using BettingUtils for EnumerableMap.AddressToUintMap;
 
 contract BetContract is ERC1155Holder, ReentrancyGuard {
     using EnumerableMap for EnumerableMap.AddressToUintMap;
@@ -28,6 +31,8 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
     Hub public hub;
     address public groupCRCToken;
     address public erc20Group;
+
+    address public liquidityRemover;
 
     // outcome token balances
     EnumerableMap.AddressToUintMap private _balances;
@@ -44,7 +49,8 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         address _hubAddress,
         uint256 _betContractIdentifier,
         string memory _organizationName,
-        bytes32 _organizationMetadataDigest
+        bytes32 _organizationMetadataDigest,
+        address _liquidityRemover
     ) {
         require(fpmmAddress != address(0), "Invalid FPMM address");
         require(_groupCRCToken != address(0), "Invalid group CRC token address");
@@ -55,6 +61,7 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         outcomeIndex = _outcomeIndex;
         hub = Hub(_hubAddress);
         betContractIdentifier = _betContractIdentifier;
+        liquidityRemover = _liquidityRemover;
 
         erc20Group = hub.wrap(address(groupCRCToken), 0, CirclesType.Inflation);
 
@@ -98,15 +105,9 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         require(better != address(0), "Invalid better address");
         require(investmentAmount > 0, "Investment amount must be > 0");
 
-        uint256 balanceBeforeWrap = ERC20(erc20Group).balanceOf(address(this));
-
-        hub.wrap(address(groupCRCToken), investmentAmount, CirclesType.Inflation);
-
-        // the balance will be greater than investmentAmount because demurrage not applied to inflationary tokens
-        uint256 balanceAfterWrap = ERC20(erc20Group).balanceOf(address(this));
-
-        uint256 amountToBet = balanceAfterWrap - balanceBeforeWrap;
-        require(amountToBet > 0, "Wrap did not yield bettable tokens");
+        uint256 amountToBet = BettingUtils.defineAmountToBet(
+            hub, erc20Group, address(groupCRCToken), investmentAmount, CirclesType.Inflation
+        );
 
         // authorize groupCRC
 
@@ -132,9 +133,7 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
     }
 
     function updateBalance(address better, uint256 expectedShares) internal {
-        (bool exists, uint256 currentBalance) = _balances.tryGet(better);
-        uint256 newBalance = exists ? currentBalance + expectedShares : expectedShares;
-        _balances.set(better, newBalance);
+        _balances.updateBalance(better, expectedShares);
     }
 
     function redeemAll(bytes32 conditionId, uint256[] memory indexSets) public {
@@ -200,6 +199,12 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         // We only place bet if we received groupCRC tokens
         if (groupCRCToken == address(uint160(id))) {
             placeBet(value, from);
+        }
+        // If it's an outcome token from LiquidityRemover
+        else if (from == address(liquidityRemover)) {
+            (address user, uint256 shares) = abi.decode(data, (address, uint256));
+            // Update the user's balance with their share of the outcome tokens
+            updateBalance(user, shares);
         }
 
         return super.onERC1155Received(operator, from, id, value, data);

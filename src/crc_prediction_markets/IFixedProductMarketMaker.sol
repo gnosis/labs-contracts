@@ -4,6 +4,8 @@ import "./IConditionalTokens.sol";
 
 interface IFixedProductMarketMaker {
     // View functions
+    function balanceOf(address account) external view returns (uint256);
+    function conditionIds(uint256) external view returns (bytes32);
     function conditionalTokens() external view returns (IConditionalTokens);
     function collectedFees() external view returns (uint256);
     function feesWithdrawableBy(address account) external view returns (uint256);
