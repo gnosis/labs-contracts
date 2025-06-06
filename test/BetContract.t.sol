@@ -61,9 +61,10 @@ contract BetTest is Test, GroupSetup, IHubErrors {
             CONDITION_ID
         );
         fpmmMarketId = address(mockFPMM);
-
+        console.log("before liquidity vault");
         // liquidity vault
         liquidityVaultToken = new LiquidityVaultToken();
+        console.log("after liquidity vault");
 
         // Deploy BetContract with mock FPMM
         betContract = new BetContract(

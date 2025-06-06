@@ -9,6 +9,7 @@ import "circles-contracts-v2/hub/Hub.sol";
 import "circles-contracts-v2/lift/IERC20Lift.sol";
 import "./utils/BettingUtils.sol";
 import "./LiquidityVaultToken.sol";
+import {console} from "forge-std/console.sol";
 
 /**
  * @title LiquidityManager
@@ -56,6 +57,7 @@ contract LiquidityAdder is ERC1155Holder {
         address _liquidityVaultToken,
         uint256 _slotCount
     ) {
+        console.log("market maker addr liq adder", _marketMaker);
         require(_marketMaker != address(0), "Invalid market maker address");
         require(_hubAddress != address(0), "Invalid hub address");
         require(_groupCRCToken != address(0), "Invalid group CRC token address");
@@ -75,7 +77,7 @@ contract LiquidityAdder is ERC1155Holder {
         collateralToken.approve(address(hub), type(uint256).max);
     }
 
-    function addLiquidity(uint256 amount, address better) internal returns (uint256) {
+    function addLiquidity(uint256 amount, address better) public returns (uint256) {
         require(amount > 0, "Amount must be greater than 0");
         require(better != address(0), "Invalid better address");
 

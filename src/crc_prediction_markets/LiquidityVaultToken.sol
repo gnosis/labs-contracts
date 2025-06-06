@@ -8,14 +8,17 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 contract LiquidityVaultToken is OZERC1155, AccessControl {
     using Strings for uint256;
 
+    event TokenDeployed(address indexed deployer, string baseURI);
+
     // Base role for all market-specific updater roles
     bytes32 public constant UPDATER_ROLE_BASE = keccak256("UPDATER_ROLE");
 
     // Base URI for token metadata
-    string private _baseURI;
+    string private _baseURI = "crc-pm-token-";
 
-    constructor() OZERC1155("crc-pm-token-") AccessControl() {
-        grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    constructor() OZERC1155(_baseURI) AccessControl() {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        emit TokenDeployed(msg.sender, _baseURI);
     }
 
     function parseAddress(address _address) public pure returns (uint256) {

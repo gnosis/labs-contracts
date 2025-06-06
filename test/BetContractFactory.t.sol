@@ -8,26 +8,36 @@ import "../src/crc_prediction_markets/IFixedProductMarketMaker.sol";
 import "../src/crc_prediction_markets/IConditionalTokens.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-//import "circles-v2/hub/Hub.sol";
-import {CirclesType} from "circles-v2/lift/IERC20Lift.sol";
+import "circles-v2/lift/IERC20Lift.sol";
+import "../test/mocks/MockFixedProductMarketMaker.sol";
+import "../test/mocks/MockHubCRCPMs.sol";
+import "../test/mocks/MockConditionalTokens.sol";
+import "../test/mocks/MockERC20.sol";
 
 contract BetContractFactoryTest is Test {
     BetContractFactory factory;
-    IFixedProductMarketMaker fpmm;
+    MockFixedProductMarketMaker fpmm;
     address groupCRCToken;
-    MockHub hub;
+    MockHubCRCPMs hub;
     address fpmmAddress;
     address groupTokenAddress;
     address hubAddress;
+
+    uint256 constant TOKEN_ID = 1;
+    uint256 constant AMOUNT = 100;
+    uint256 constant OUTCOME_SLOT_COUNT = 2;
+    uint256 constant CONDITION_ID = 1;
 
     bytes32[] conditionIds;
 
     function setUp() public {
         // Deploy mock contracts
-        fpmm = IFixedProductMarketMaker(address(new MockFixedProductMarketMaker()));
+
         MockERC20 mockToken = new MockERC20("Test Token", "TEST");
         groupCRCToken = address(mockToken);
-        hub = MockHub(address(new MockHub()));
+        hub = new MockHubCRCPMs();
+        //fpmm = IFixedProductMarketMaker(address(new MockPartialFixedProductMarketMaker()));
+        fpmm = new MockFixedProductMarketMaker(address(groupCRCToken), OUTCOME_SLOT_COUNT, CONDITION_ID);
 
         // Set addresses
         fpmmAddress = address(fpmm);
@@ -100,6 +110,7 @@ contract BetContractFactoryTest is Test {
 
     function testCannotCreateWithZeroAddresses() public {
         // Test with zero FPMM address
+        console.log("testCannotCreateWithZeroAddresses");
         vm.expectRevert("Invalid FPMM address");
         uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
         bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
@@ -107,7 +118,7 @@ contract BetContractFactoryTest is Test {
         factory.createBetContractsForFpmm(
             address(0), groupTokenAddress, outcomeIndexes, conditionIds, organizationNames, organizationMetadataDigests
         );
-
+        console.log("first test passed");
         // Test with zero group CRC token address
         vm.expectRevert("Invalid group CRC token address");
 
@@ -130,13 +141,16 @@ contract BetContractFactoryTest is Test {
             buildOrganizationNames(),
             buildOrganizationMetadataDigests()
         );
-
+        console.log("after fpmm creation");
         // Get market info
         MarketInfo memory marketInfo = factory.getMarketInfo(fpmmAddress);
+
+        console.log("1 testBetContractCreation");
 
         // Verify bet contracts
         for (uint256 i = 0; i < 2; i++) {
             BetContract betContract = BetContract(marketInfo.betContracts[i]);
+            console.log("2");
             assertEq(address(betContract.fpmm()), fpmmAddress, "FPMM address should match");
             assertEq(address(betContract.groupCRCToken()), groupTokenAddress, "Group CRC token should match");
             assertEq(betContract.outcomeIndex(), i, "Outcome index should match");
@@ -163,72 +177,36 @@ contract BetContractFactoryTest is Test {
         uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
         bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
         string[] memory organizationNames = buildOrganizationNames();
+        console.log("before create bet contract");
         factory.createBetContractsForFpmm(
             fpmmAddress, groupTokenAddress, outcomeIndexes, conditionIds, organizationNames, organizationMetadataDigests
         );
+        console.log("after create bet contract");
 
         // Verify FPMM address is tracked
         assertTrue(factory.fpmmAlreadyProcessed(fpmmAddress), "FPMM address should be tracked");
+        console.log("after first verify");
 
         // Create another market
-        address newFpmmAddress = address(2);
+        MockFixedProductMarketMaker mockFpmm =
+            new MockFixedProductMarketMaker(address(groupCRCToken), OUTCOME_SLOT_COUNT, CONDITION_ID);
 
         outcomeIndexes = new uint256[](2);
         outcomeIndexes[0] = uint256(0);
         outcomeIndexes[1] = uint256(1);
 
         factory.createBetContractsForFpmm(
-            newFpmmAddress,
+            address(mockFpmm),
             groupTokenAddress,
             outcomeIndexes,
             conditionIds,
             organizationNames,
             organizationMetadataDigests
         );
-
+        console.log("before assert");
         // Verify both FPMM addresses are tracked
         assertTrue(factory.fpmmAlreadyProcessed(fpmmAddress), "First FPMM address should still be tracked");
-        assertTrue(factory.fpmmAlreadyProcessed(newFpmmAddress), "Second FPMM address should be tracked");
+        console.log("after first assert");
+        assertTrue(factory.fpmmAlreadyProcessed(address(mockFpmm)), "Second FPMM address should be tracked");
     }
-}
-
-// Mock contracts
-contract MockFixedProductMarketMaker {
-    IConditionalTokens public conditionalTokens;
-
-    constructor() {
-        conditionalTokens = IConditionalTokens(address(new MockConditionalTokens()));
-    }
-}
-
-contract MockConditionalTokens {
-    function redeemPositions(IERC20, bytes32, bytes32, uint256[] memory) external pure {
-        // Mock implementation
-    }
-}
-
-contract MockHub {
-    address public wrappedToken;
-
-    function wrap(address token, uint256 amount, CirclesType _type) external returns (address) {
-        require(token != address(0), "Invalid token address");
-        //require(amount > 0, "Amount must be greater than 0");
-
-        // For testing purposes, we'll just return the same token address
-        wrappedToken = token;
-        return token;
-    }
-
-    function trust(address _trustReceiver, uint96 _expiry) external {
-        // do nothing
-    }
-
-    function registerOrganization(string memory, /*orgaName*/ bytes32 /*identifier*/ ) external {
-        // No-op for testing
-    }
-}
-
-// mock ERC20
-contract MockERC20 {
-    constructor(string memory name, string memory symbol) {}
 }
