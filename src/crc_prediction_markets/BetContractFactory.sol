@@ -15,6 +15,12 @@ struct MarketInfo {
     address[] betContracts;
 }
 
+struct LiquidityInfo {
+    address liquidityVaultToken;
+    address liquidityAdder;
+    address liquidityRemover;
+}
+
 contract BetContractFactory {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -31,6 +37,7 @@ contract BetContractFactory {
 
     // Mapping from FPMM address to market information
     mapping(address => MarketInfo) public fpmmToBetContracts;
+    mapping(address => LiquidityInfo) public fpmmToLiquidityInfo;
 
     EnumerableSet.AddressSet private fpmmAddresses;
 
@@ -41,6 +48,10 @@ contract BetContractFactory {
 
     function getMarketInfo(address fpmmAddress) public view returns (MarketInfo memory) {
         return fpmmToBetContracts[fpmmAddress];
+    }
+
+    function getLiquidityInfo(address fpmmAddress) public view returns (LiquidityInfo memory) {
+        return fpmmToLiquidityInfo[fpmmAddress];
     }
 
     function fpmmAlreadyProcessed(address fpmmAddress) public view returns (bool) {
@@ -71,7 +82,7 @@ contract BetContractFactory {
         return address(betContract);
     }
 
-    function createBetContractsForFpmm(
+    function createContractsForFpmm(
         address fpmmAddress,
         address groupCRCToken,
         uint256[] memory outcomeIndexes,
@@ -79,23 +90,31 @@ contract BetContractFactory {
         string[] memory organizationNames,
         bytes32[] memory organizationMetadataDigests
     ) external {
-        console.log("entered createBetContractsForFpmm");
         require(fpmmAddress != address(0), "Invalid FPMM address");
         require(groupCRCToken != address(0), "Invalid group CRC token address");
 
         // Create market if it doesn't exist
         if (!fpmmAddresses.contains(fpmmAddress)) {
             console.log("1 Bet Contract Factory");
+            liquidityVaultToken.addUpdater(address(this), fpmmAddress);
             uint256 betContractIdentifier = fpmmAddresses.length();
             console.log("2");
             LiquidityRemover liquidityRemover = new LiquidityRemover(
                 fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), address(this), conditionIds
             );
+            liquidityVaultToken.addUpdater(address(liquidityRemover), fpmmAddress);
             console.log("3");
             LiquidityAdder liquidityAdder = new LiquidityAdder(
                 fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), conditionIds.length
             );
+            liquidityVaultToken.addUpdater(address(liquidityAdder), fpmmAddress);
             console.log("4");
+            // ToDo - call approve on liquidityAdder and Remover with infinite amount
+            address[] memory spenders = new address[](2);
+            spenders[0] = address(liquidityAdder);
+            spenders[1] = address(liquidityRemover);
+            liquidityVaultToken.approveMarketMakerLPTokensSpend(fpmmAddress, spenders);
+
             address[] memory betContracts = new address[](outcomeIndexes.length);
             for (uint8 outcomeIdx = 0; outcomeIdx < outcomeIndexes.length; outcomeIdx++) {
                 console.log("5");
@@ -116,6 +135,11 @@ contract BetContractFactory {
                 groupCRCToken: groupCRCToken,
                 outcomeIdxs: outcomeIndexes,
                 betContracts: betContracts
+            });
+            fpmmToLiquidityInfo[fpmmAddress] = LiquidityInfo({
+                liquidityAdder: address(liquidityAdder),
+                liquidityRemover: address(liquidityRemover),
+                liquidityVaultToken: address(liquidityVaultToken)
             });
             console.log("7");
             fpmmAddresses.add(fpmmAddress);

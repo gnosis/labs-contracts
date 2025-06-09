@@ -90,20 +90,26 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
         console.log("before wrap Liq Remover");
 
         // Wrap the collateral token for ERC1155 support
-        wrappedCollateralToken = hub.wrap(address(collateralToken), 0, CirclesType.Inflation);
+        wrappedCollateralToken = hub.wrap(groupCRCToken, 0, CirclesType.Inflation);
         console.log("after wrap liq remover constr");
 
         // Approve the wrapped token for transfers
-        collateralToken.approve(address(hub), type(uint256).max);
+        //collateralToken.approve(address(hub), type(uint256).max);
         console.log("after approve liq remover");
     }
 
     function removeAllLiquidityFromUser(address user) public nonReentrant {
+        console.log("remove all liquidity from user", liquidityVaultToken.parseAddress(address(marketMaker)));
         uint256 shares = liquidityVaultToken.balanceOf(user, liquidityVaultToken.parseAddress(address(marketMaker)));
+        console.log("removeAllLiquidityFromUser shares", shares);
         require(shares > 0, "Insufficient balance");
         liquidityVaultToken.burnFrom(user, address(marketMaker), shares);
-        marketMaker.removeFunding(shares);
 
+        // We transfer the LP tokens from LiquidityVault to this contract because they will
+        // get burned by MarketMaker.
+        IERC20(address(marketMaker)).transferFrom(address(liquidityVaultToken), address(this), shares);
+        marketMaker.removeFunding(shares);
+        console.log("before conditional tokens");
         IConditionalTokens conditionalTokens = IConditionalTokens(address(marketMaker.conditionalTokens()));
 
         // Get all bet contracts for this market
@@ -113,12 +119,12 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
 
         // Convert addresses to BetContract instances
         BetContract[] memory betContracts = new BetContract[](numBetContracts);
+        console.log("liq remover, before for");
         for (uint256 i = 0; i < numBetContracts; i++) {
             betContracts[i] = BetContract(marketInfo.betContracts[i]);
         }
 
         // For each condition and outcome, transfer the corresponding tokens
-        // ToDo - Loop through outcomeSlot count
         for (uint256 i = 0; i < conditionIds.length; i++) {
             for (uint256 j = 0; j < betContracts.length; j++) {
                 bytes32 conditionId = conditionIds[i];

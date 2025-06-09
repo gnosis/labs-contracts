@@ -4,79 +4,20 @@ pragma solidity ^0.8.20;
 import {Test} from "forge-std/Test.sol";
 import {StdCheats} from "forge-std/StdCheats.sol";
 import "forge-std/console.sol";
-import "circles-v2-test/groups/groupSetup.sol";
-import "circles-v2/errors/Errors.sol";
+import "./helpers/FPMMTestHelper.sol";
 import "../src/crc_prediction_markets/BetContract.sol";
-import "./mocks/MockFixedProductMarketMaker.sol";
-import "../src/crc_prediction_markets/LiquidityVaultToken.sol";
 
-contract BetTest is Test, GroupSetup, IHubErrors {
-    address group;
-    BetContract betContract;
+contract BetContractTest is FPMMTestHelper {
+    BetContract public betContract;
     uint256 constant TOKEN_ID = 1;
     uint256 constant AMOUNT = 100;
-    uint256 constant mockOutcomeIndex = 0;
-    uint256 constant OUTCOME_SLOT_COUNT = 2;
-    uint256 constant CONDITION_ID = 1;
-    // market also has a condition_id, outcome_slot_count
-    //address constant fpmmMarketId = address(0x011F45E9DC3976159edf0395C0Cd284df91F59Bc);
-    address fpmmMarketId;
-
-    LiquidityVaultToken liquidityVaultToken;
-
-    constructor() GroupSetup() {}
-
-    // Setup
 
     function setUp() public {
-        groupSetup();
-
-        // register a group already
-        group = addresses[35];
-        console.log("inside setup, group", group);
-        console.log("inside setup, hub", address(hub));
-
-        vm.prank(group);
-        hub.registerGroup(mintPolicy, "Group1", "G1", bytes32(0));
-
-        // G1 trusts first 5 humans
-        for (uint256 i = 0; i < 3; i++) {
-            vm.prank(group);
-            hub.trust(addresses[i], INDEFINITE_FUTURE);
-
-            // and each human trusts the group
-            vm.prank(addresses[i]);
-            hub.trust(group, INDEFINITE_FUTURE);
-        }
-
-        // determine erc20 to use as collateral token
-        address erc20Group = hub.wrap(address(group), 0, CirclesType.Inflation);
-        console.log("collateral ERC20 group CRC token", address(erc20Group));
-
-        // Deploy mock FPMM
-        MockFixedProductMarketMaker mockFPMM = new MockFixedProductMarketMaker(
-            //address(mockWXDAI), // Using mockWXDAI as collateral
-            address(erc20Group),
-            OUTCOME_SLOT_COUNT,
-            CONDITION_ID
-        );
-        fpmmMarketId = address(mockFPMM);
-        console.log("before liquidity vault");
-        // liquidity vault
-        liquidityVaultToken = new LiquidityVaultToken();
-        console.log("after liquidity vault");
+        // Setup FPMM environment using the helper
+        _setupFPMMEnvironment();
 
         // Deploy BetContract with mock FPMM
-        betContract = new BetContract(
-            fpmmMarketId,
-            address(group),
-            mockOutcomeIndex,
-            address(hub),
-            1,
-            "Organization1",
-            bytes32(0),
-            address(liquidityVaultToken)
-        );
+        betContract = deployBetContract("Organization1", bytes32(0));
 
         // deposit wxdai
         vm.deal(address(betContract), 10 ether);

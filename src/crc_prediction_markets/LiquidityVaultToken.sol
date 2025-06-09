@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {ERC1155 as OZERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract LiquidityVaultToken is OZERC1155, AccessControl {
     using Strings for uint256;
@@ -23,6 +24,15 @@ contract LiquidityVaultToken is OZERC1155, AccessControl {
 
     function parseAddress(address _address) public pure returns (uint256) {
         return uint256(uint160(_address));
+    }
+
+    function approveMarketMakerLPTokensSpend(address marketId, address[] memory spenders)
+        external
+        onlyRole(getUpdaterRole(marketId))
+    {
+        for (uint256 i = 0; i < spenders.length; i++) {
+            IERC20(address(marketId)).approve(spenders[i], type(uint256).max);
+        }
     }
 
     // Get the role for a specific market's updater

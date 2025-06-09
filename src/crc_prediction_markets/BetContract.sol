@@ -112,7 +112,6 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         // authorize groupCRC
 
         uint256 allowance = ERC20(erc20Group).allowance(address(this), address(fpmm));
-
         if (allowance < amountToBet) {
             ERC20(erc20Group).approve(address(fpmm), amountToBet);
         }
