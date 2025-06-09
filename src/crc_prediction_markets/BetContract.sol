@@ -119,8 +119,6 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         uint256 expectedShares = fpmm.calcBuyAmount(amountToBet, outcomeIndex);
 
         // 1% slippage
-        uint256 balance = ERC20(fpmm.collateralToken()).balanceOf(address(this));
-
         fpmm.buy(amountToBet, outcomeIndex, expectedShares * 99 / 100);
 
         // update balances

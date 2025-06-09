@@ -12,6 +12,7 @@ Repository holding the contracts made by Gnosis Labs team.
 | Agent Registry contract               | Simple contract storing active agent addresses            | [0xe8ae78b19c997b6da8189b1a644d4076f8bc880e](https://gnosisscan.io/address/0xe8ae78b19c997b6da8189b1a644d4076f8bc880e#code) |  |
 | Agent communication contract               | Simple contract storing message queue for each agent            | [0x219083Fc5315fdc145eE5C0eb22CbE12d6115c53](https://gnosisscan.io/address/0x219083Fc5315fdc145eE5C0eb22CbE12d6115c53#code) |  |
 | Simple Treasury contract               | Contract for storing the NFT agent game treasury | [0x624ad0db52e6b18afb4d36b8e79d0c2a74f3fc8a](https://gnosisscan.io/address/0x624ad0db52e6b18afb4d36b8e79d0c2a74f3fc8a#code) |  |
+| NoSingleSignedTransactionGuard     | Safe Guard that only allows transactions with at least 2 signers. | [0x43eff50Dc1Db7c084d2488792C7df28C0c3558D5](https://gnosisscan.io/address/0x43eff50Dc1Db7c084d2488792C7df28C0c3558D5#code)   | none |
 | DebuggingContract     | Add whatever function you need here to test out | [0x5Aa82E068aE6a6a1C26c42E5a59520a74Cdb8998](https://gnosisscan.io/address/0x5Aa82E068aE6a6a1C26c42E5a59520a74Cdb8998#code)   | none |
 
 ## Set up contracts development
