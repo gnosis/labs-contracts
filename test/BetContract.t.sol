@@ -24,7 +24,6 @@ contract BetContractTest is FPMMTestHelper {
     }
 
     function testERC1155Triggered() public {
-        console.log("entered testERC1155Triggered");
         // mint to group
         address[] memory collateral = new address[](1);
         uint256[] memory amounts = new uint256[](1);

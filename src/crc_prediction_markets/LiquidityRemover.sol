@@ -21,7 +21,7 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
     IFixedProductMarketMaker public immutable marketMaker;
 
     // The collateral token used by the market
-    IERC20 public immutable collateralToken;
+    address public collateralTokenAddress;
 
     // The wrapped ERC20 token address for the collateral
     address public wrappedCollateralToken;
@@ -46,6 +46,7 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
         address _marketMaker,
         address _hubAddress,
         address _groupCRCToken,
+        address _collateralToken,
         address _liquidityVaultToken,
         address _betContractFactory,
         bytes32[] memory _conditionIds
@@ -57,7 +58,7 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
         require(_conditionIds.length > 0, "No conditions found");
 
         marketMaker = IFixedProductMarketMaker(_marketMaker);
-        collateralToken = IERC20(marketMaker.collateralToken());
+        collateralTokenAddress = _collateralToken;
         hub = Hub(_hubAddress);
         groupCRCToken = _groupCRCToken;
         liquidityVaultToken = LiquidityVaultToken(_liquidityVaultToken);

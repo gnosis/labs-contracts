@@ -12,39 +12,17 @@ using EnumerableMap for EnumerableMap.AddressToUintMap;
  * @title BettingUtils
  * @dev Utility functions for betting operations
  */
-library BettingUtils {
-    /**
-     * @dev Calculates the amount to bet by wrapping tokens and measuring the difference
-     * @param hub The Circles Hub contract
-     * @param erc20Token The ERC20 token to check balance of
-     * @param groupCRCToken The CRC token address to wrap
-     * @param investmentAmount The amount of tokens to invest
-     * @return amountToBet The calculated amount available for betting
-     */
-    /**
-     * @dev Updates the balance of a better in the balances mapping
-     * @param balances The mapping of addresses to their balances
-     * @param better The address of the better
-     * @param expectedShares The number of shares to add to the better's balance
-     */
-    function updateBalance(EnumerableMap.AddressToUintMap storage balances, address better, uint256 expectedShares)
-        internal
-    {
-        (bool exists, uint256 currentBalance) = balances.tryGet(better);
-        uint256 newBalance = exists ? currentBalance + expectedShares : expectedShares;
-        balances.set(better, newBalance);
-    }
-
+abstract contract BettingUtils {
     function defineAmountToBet(
-        Hub hub,
+        address hubAddress,
         address erc20Token,
         address groupCRCToken,
         uint256 investmentAmount,
         CirclesType circlesType
-    ) external returns (uint256) {
+    ) internal returns (uint256) {
         uint256 balanceBeforeWrap = IERC20(erc20Token).balanceOf(address(this));
 
-        hub.wrap(groupCRCToken, investmentAmount, circlesType);
+        Hub(hubAddress).wrap(groupCRCToken, investmentAmount, circlesType);
 
         // the balance will be greater than investmentAmount because demurrage not applied to inflationary tokens
         uint256 balanceAfterWrap = IERC20(erc20Token).balanceOf(address(this));

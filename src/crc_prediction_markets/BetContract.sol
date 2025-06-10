@@ -14,9 +14,7 @@ import "circles-v2/hub/Hub.sol";
 import "circles-v2/lift/IERC20Lift.sol";
 import "./utils/BettingUtils.sol";
 
-using BettingUtils for EnumerableMap.AddressToUintMap;
-
-contract BetContract is ERC1155Holder, ReentrancyGuard {
+contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
     using EnumerableMap for EnumerableMap.AddressToUintMap;
 
     event BetPlaced(address indexed better, uint256 investmentAmount, uint256 expectedShares);
@@ -102,9 +100,8 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         require(better != address(0), "Invalid better address");
         require(investmentAmount > 0, "Investment amount must be > 0");
 
-        uint256 amountToBet = BettingUtils.defineAmountToBet(
-            hub, erc20Group, address(groupCRCToken), investmentAmount, CirclesType.Inflation
-        );
+        uint256 amountToBet =
+            defineAmountToBet(address(hub), erc20Group, address(groupCRCToken), investmentAmount, CirclesType.Inflation);
 
         // authorize groupCRC
 
@@ -126,7 +123,9 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
     }
 
     function updateBalance(address better, uint256 expectedShares) internal {
-        _balances.updateBalance(better, expectedShares);
+        (bool exists, uint256 currentBalance) = _balances.tryGet(better);
+        uint256 newBalance = exists ? currentBalance + expectedShares : expectedShares;
+        _balances.set(better, newBalance);
     }
 
     function redeemAll(bytes32 conditionId, uint256[] memory indexSets) public {

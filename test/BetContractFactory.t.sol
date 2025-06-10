@@ -24,6 +24,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
     address groupTokenAddress;
     address hubAddress;
 
+    LiquidityVaultToken liquidityToken;
+    LiquidityContractFactory liquidityContractFactory;
+
     uint256 constant TOKEN_ID = 1;
     uint256 constant AMOUNT = 100;
 
@@ -36,8 +39,8 @@ contract BetContractFactoryTest is FPMMTestHelper {
         hubAddress = address(hub);
 
         conditionIds = buildMockConditionIds();
-
-        factory = new BetContractFactory(hubAddress);
+        liquidityContractFactory = new LiquidityContractFactory();
+        factory = new BetContractFactory(hubAddress, address(liquidityContractFactory));
     }
 
     function buildMockConditionIds() private pure returns (bytes32[] memory) {

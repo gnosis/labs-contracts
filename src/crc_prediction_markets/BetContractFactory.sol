@@ -3,10 +3,12 @@ pragma solidity ^0.8.0;
 
 import "./BetContract.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./LiquidityRemover.sol";
 import "./LiquidityAdder.sol";
+import "./LiquidityVaultToken.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "./LiquidityContractFactory.sol";
 
 // Struct to store market information
 struct MarketInfo {
@@ -22,24 +24,18 @@ struct LiquidityInfo {
     address liquidityRemover;
 }
 
-contract BetContractFactory is Pausable, Ownable {
+contract BetContractFactory is Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address public hubAddress;
     // for holding LP shares of fixed product market makers
     LiquidityVaultToken public liquidityVaultToken;
+    LiquidityContractFactory private liquidityContractFactory;
 
-    constructor(address _hubAddress) Ownable(msg.sender) {
+    constructor(address _hubAddress, address _liquidityContractFactory) Ownable(msg.sender) {
         hubAddress = _hubAddress;
         liquidityVaultToken = new LiquidityVaultToken();
-    }
-
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    function unpause() external onlyOwner {
-        _unpause();
+        liquidityContractFactory = LiquidityContractFactory(_liquidityContractFactory);
     }
 
     event BetContractDeployed(address indexed betContract, uint256 indexed outcomeIndex);
@@ -49,6 +45,14 @@ contract BetContractFactory is Pausable, Ownable {
     mapping(address => LiquidityInfo) public fpmmToLiquidityInfo;
 
     EnumerableSet.AddressSet private fpmmAddresses;
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
 
     // Public function to return all processed FPMM addresses
     function getAllProcessedFPMMAddresses() external view returns (address[] memory) {
@@ -75,7 +79,7 @@ contract BetContractFactory is Pausable, Ownable {
         string memory organizationName,
         bytes32 organizationMetadataDigest,
         address liquidityRemover
-    ) private whenNotPaused returns (address) {
+    ) private returns (address) {
         BetContract betContract = new BetContract(
             fpmmAddress,
             groupCRCToken,
@@ -87,8 +91,19 @@ contract BetContractFactory is Pausable, Ownable {
             liquidityRemover
         );
         emit BetContractDeployed(address(betContract), outcomeIndex);
-
         return address(betContract);
+    }
+
+    function addRolesAndHandleApprovals(address fpmmAddress, address liquidityAdder, address liquidityRemover)
+        private
+    {
+        liquidityVaultToken.addUpdater(address(liquidityContractFactory), fpmmAddress);
+        liquidityVaultToken.addUpdater(address(liquidityAdder), fpmmAddress);
+        liquidityVaultToken.addUpdater(address(liquidityRemover), fpmmAddress);
+        address[] memory spenders = new address[](2);
+        spenders[0] = address(liquidityAdder);
+        spenders[1] = address(liquidityRemover);
+        liquidityVaultToken.approveMarketMakerLPTokensSpend(fpmmAddress, spenders);
     }
 
     function createContractsForFpmm(
@@ -98,14 +113,16 @@ contract BetContractFactory is Pausable, Ownable {
         bytes32[] memory conditionIds,
         string[] memory organizationNames,
         bytes32[] memory organizationMetadataDigests
-    ) external whenNotPaused {
+    ) external {
         require(fpmmAddress != address(0), "Invalid FPMM address");
         require(groupCRCToken != address(0), "Invalid group CRC token address");
 
         // Create market if it doesn't exist
         if (!fpmmAddresses.contains(fpmmAddress)) {
-            (LiquidityRemover liquidityRemover, LiquidityAdder liquidityAdder) =
-                createLiquidityContracts(fpmmAddress, groupCRCToken, conditionIds);
+            (address liquidityRemover, address liquidityAdder) = liquidityContractFactory.createLiquidityContracts(
+                hubAddress, address(liquidityVaultToken), groupCRCToken, fpmmAddress, conditionIds
+            );
+            addRolesAndHandleApprovals(fpmmAddress, liquidityAdder, liquidityRemover);
 
             address[] memory betContracts = new address[](outcomeIndexes.length);
             uint256 betContractIdentifier = fpmmAddresses.length();
@@ -128,34 +145,11 @@ contract BetContractFactory is Pausable, Ownable {
                 betContracts: betContracts
             });
             fpmmToLiquidityInfo[fpmmAddress] = LiquidityInfo({
-                liquidityAdder: address(liquidityAdder),
-                liquidityRemover: address(liquidityRemover),
+                liquidityAdder: liquidityAdder,
+                liquidityRemover: liquidityRemover,
                 liquidityVaultToken: address(liquidityVaultToken)
             });
             fpmmAddresses.add(fpmmAddress);
         }
-    }
-
-    function createLiquidityContracts(address fpmmAddress, address groupCRCToken, bytes32[] memory conditionIds)
-        internal
-        returns (LiquidityRemover, LiquidityAdder)
-    {
-        liquidityVaultToken.addUpdater(address(this), fpmmAddress);
-
-        LiquidityRemover liquidityRemover = new LiquidityRemover(
-            fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), address(this), conditionIds
-        );
-        liquidityVaultToken.addUpdater(address(liquidityRemover), fpmmAddress);
-        LiquidityAdder liquidityAdder = new LiquidityAdder(
-            fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), conditionIds.length
-        );
-        liquidityVaultToken.addUpdater(address(liquidityAdder), fpmmAddress);
-
-        // approve liquidity adder and remover to move LP tokens
-        address[] memory spenders = new address[](2);
-        spenders[0] = address(liquidityAdder);
-        spenders[1] = address(liquidityRemover);
-        liquidityVaultToken.approveMarketMakerLPTokensSpend(fpmmAddress, spenders);
-        return (liquidityRemover, liquidityAdder);
     }
 }
