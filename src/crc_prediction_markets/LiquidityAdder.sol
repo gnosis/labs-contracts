@@ -11,14 +11,8 @@ import "./utils/BettingUtils.sol";
 import "./LiquidityVaultToken.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-/**
- * @title LiquidityManager
- * @dev Manages liquidity provisioning to FixedProductMarketMaker contracts
- */
 contract LiquidityAdder is ERC1155Holder, ReentrancyGuard {
     using SafeERC20 for IERC20;
-
-    error InvalidAddress();
 
     // Address of the FixedProductMarketMaker contract
     IFixedProductMarketMaker public immutable marketMaker;
@@ -41,7 +35,6 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard {
 
     // Events
     event LiquidityAdded(address indexed provider, uint256 amount, uint256 sharesMinted);
-    event LiquidityRemoved(address indexed provider, uint256 collateralAmount, uint256 sharesBurned);
 
     constructor(
         address _marketMaker,
@@ -63,13 +56,7 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard {
         slotCount = _slotCount;
 
         // Wrap the collateral token for ERC1155 support
-
         wrappedCollateralToken = hub.wrap(groupCRCToken, 0, CirclesType.Inflation);
-    }
-
-    modifier validAddress(address addr) {
-        if (addr == address(0)) revert InvalidAddress();
-        _;
     }
 
     function _ensureApproval(uint256 amount) private {
@@ -79,9 +66,7 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard {
         }
     }
 
-    function addLiquidity(uint256 amount, address better) private validAddress(better) nonReentrant returns (uint256) {
-        require(amount > 0, "Amount must be greater than 0");
-
+    function addLiquidity(uint256 amount, address better) private nonReentrant returns (uint256) {
         uint256 amountToBet = BettingUtils.defineAmountToBet(
             hub, wrappedCollateralToken, address(groupCRCToken), amount, CirclesType.Inflation
         );
@@ -89,11 +74,10 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard {
 
         _ensureApproval(amountToBet);
 
-        // We add liquidity in equal amounts to all outcomes
-        // Hence no need to fill distributionHint
+        // We add liquidity in equal amounts to all outcomes, hence no need to fill distributionHint
+        // We transfer the LP tokens to the liquidity vault token contract for safekeeping
         uint256 prevBalance = IERC20(address(marketMaker)).balanceOf(address(this));
         marketMaker.addFunding(amountToBet, distributionHint);
-
         uint256 postBalance = IERC20(address(marketMaker)).balanceOf(address(this));
         IERC20(address(marketMaker)).transfer(address(liquidityVaultToken), postBalance - prevBalance);
 

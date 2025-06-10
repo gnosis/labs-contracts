@@ -20,7 +20,6 @@ contract BetContractFactoryTest is FPMMTestHelper {
     BetContractFactory factory;
     MockFixedProductMarketMaker fpmm;
 
-    //MockHubCRCPMs hub;
     address fpmmAddress;
     address groupTokenAddress;
     address hubAddress;

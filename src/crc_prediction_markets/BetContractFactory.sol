@@ -107,11 +107,6 @@ contract BetContractFactory is Pausable, Ownable {
             (LiquidityRemover liquidityRemover, LiquidityAdder liquidityAdder) =
                 createLiquidityContracts(fpmmAddress, groupCRCToken, conditionIds);
 
-            address[] memory spenders = new address[](2);
-            spenders[0] = address(liquidityAdder);
-            spenders[1] = address(liquidityRemover);
-            liquidityVaultToken.approveMarketMakerLPTokensSpend(fpmmAddress, spenders);
-
             address[] memory betContracts = new address[](outcomeIndexes.length);
             uint256 betContractIdentifier = fpmmAddresses.length();
             for (uint8 outcomeIdx = 0; outcomeIdx < outcomeIndexes.length; outcomeIdx++) {
@@ -155,6 +150,12 @@ contract BetContractFactory is Pausable, Ownable {
             fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), conditionIds.length
         );
         liquidityVaultToken.addUpdater(address(liquidityAdder), fpmmAddress);
+
+        // approve liquidity adder and remover to move LP tokens
+        address[] memory spenders = new address[](2);
+        spenders[0] = address(liquidityAdder);
+        spenders[1] = address(liquidityRemover);
+        liquidityVaultToken.approveMarketMakerLPTokensSpend(fpmmAddress, spenders);
         return (liquidityRemover, liquidityAdder);
     }
 }

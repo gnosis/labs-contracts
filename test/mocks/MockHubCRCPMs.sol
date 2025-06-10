@@ -14,11 +14,7 @@ contract MockHubCRCPMs {
         return token;
     }
 
-    function trust(address _trustReceiver, uint96 _expiry) external {
-        // do nothing
-    }
+    function trust(address _trustReceiver, uint96 _expiry) external {}
 
-    function registerOrganization(string memory, /*orgaName*/ bytes32 /*identifier*/ ) external {
-        // No-op for testing
-    }
+    function registerOrganization(string memory, /*orgaName*/ bytes32 /*identifier*/ ) external {}
 }

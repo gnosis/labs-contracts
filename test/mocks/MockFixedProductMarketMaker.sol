@@ -55,7 +55,7 @@ contract MockFixedProductMarketMaker is ERC20 {
         // Update outcome prices
         outcomePrices[outcomeIndex] += shares;
 
-        // Transfer shares to buyer
+        // Here we would transfer the outcome tokens to the user, but not doing it here since not needed by the test.
 
         // Emit event
         emit FPMMBuy(msg.sender, amount, amount * 5 / 100, outcomeIndex, shares);

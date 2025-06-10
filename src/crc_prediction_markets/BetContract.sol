@@ -14,8 +14,6 @@ import "circles-v2/hub/Hub.sol";
 import "circles-v2/lift/IERC20Lift.sol";
 import "./utils/BettingUtils.sol";
 
-import {console} from "forge-std/console.sol";
-
 using BettingUtils for EnumerableMap.AddressToUintMap;
 
 contract BetContract is ERC1155Holder, ReentrancyGuard {

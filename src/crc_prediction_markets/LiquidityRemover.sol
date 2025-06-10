@@ -14,10 +14,6 @@ import "./BetContract.sol";
 import "./CTHelpers.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-/**
- * @title LiquidityRemover
- * @dev Manages liquidity removal from FixedProductMarketMaker contracts
- */
 contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -78,7 +74,7 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
         liquidityVaultToken.burnFrom(user, address(marketMaker), shares);
 
         // We transfer the LP tokens from LiquidityVault to this contract because they will
-        // get burned by MarketMaker.
+        // get burned by MarketMaker (using msg.sender).
         IERC20(address(marketMaker)).transferFrom(address(liquidityVaultToken), address(this), shares);
         marketMaker.removeFunding(shares);
         IConditionalTokens conditionalTokens = IConditionalTokens(address(marketMaker.conditionalTokens()));
