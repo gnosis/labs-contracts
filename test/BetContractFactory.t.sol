@@ -53,7 +53,7 @@ contract BetContractFactoryTest is FPMMTestHelper {
         return outcomeIndexes;
     }
 
-    function testFactoryDeployment() public {
+    function testFactoryDeployment() public view {
         assertEq(address(factory) != address(0), true, "Factory should be deployed");
     }
 
@@ -210,8 +210,8 @@ contract BetContractFactoryTest is FPMMTestHelper {
         outcomeIndexes[0] = 0;
         outcomeIndexes[1] = 1;
 
-        bytes32[] memory conditionIds = new bytes32[](1);
-        conditionIds[0] = keccak256("test-condition");
+        bytes32[] memory _conditionIds = new bytes32[](1);
+        _conditionIds[0] = keccak256("test-condition");
 
         string[] memory orgNames = new string[](2);
         orgNames[0] = "Org1";
@@ -224,7 +224,7 @@ contract BetContractFactoryTest is FPMMTestHelper {
         // Should revert with EnforcedPause error when trying to create contracts
         vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
         factory.createContractsForFpmm(
-            address(fpmm), groupTokenAddress, outcomeIndexes, conditionIds, orgNames, orgMetadata
+            address(fpmm), groupTokenAddress, outcomeIndexes, _conditionIds, orgNames, orgMetadata
         );
     }
 
@@ -257,17 +257,8 @@ contract BetContractFactoryTest is FPMMTestHelper {
 
         // first we add some lp shares
         hub.safeTransferFrom(alice, liquidityAdder, uint256(uint160(group)), amount, "");
-        // here Alice should have a balance on LV, and LV should have a balance on fpmm
-        uint256 balanceAlice1 = liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
-        uint256 balanceLV1 = IERC20(fpmmMarketId).balanceOf(address(liquidityVaultToken));
 
         // then we remove the lp shares
-        uint256 sharesAfterDeposit =
-            liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
-        uint256 balanceAdder = IERC20(fpmmMarketId).balanceOf(liquidityAdder);
-        uint256 balanceRemover = IERC20(fpmmMarketId).balanceOf(liquidityRemover);
-        uint256 balanceLV = IERC20(fpmmMarketId).balanceOf(address(liquidityVaultToken));
-        // ToDo - LP tokens must be transferred to LiquidityVault, who should do the handling
         vm.prank(alice);
         hub.safeTransferFrom(alice, liquidityRemover, uint256(uint160(group)), amount, "");
 

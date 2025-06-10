@@ -8,7 +8,7 @@ contract MockConditionalTokens {
         // Mock implementation
     }
 
-    function balanceOf(address owner, uint256 id) public view virtual returns (uint256 result) {
+    function balanceOf(address, uint256) public view virtual returns (uint256 result) {
         return 0;
     }
 }

@@ -56,15 +56,12 @@ contract MockFixedProductMarketMaker is ERC20 {
         outcomePrices[outcomeIndex] += shares;
 
         // Transfer shares to buyer
-        uint256 balanceOfContract = ERC20(collateralToken).balanceOf(address(this));
-        // ToDo Add actual transfer via ConditionalTokens
-        //ERC20(collateralToken).safeTransferFrom(address(this), msg.sender, outcomeIndex, shares, "");
 
         // Emit event
         emit FPMMBuy(msg.sender, amount, amount * 5 / 100, outcomeIndex, shares);
     }
 
-    function addFunding(uint256 addedFunds, uint256[] calldata distributionHint) external {
+    function addFunding(uint256 addedFunds, uint256[] calldata) external {
         // we mock parts of the inner workings from https://github.com/gnosis/conditional-tokens-market-makers/blob/master/contracts/FixedProductMarketMaker.sol#L148
 
         require(addedFunds > 0, "funding must be non-zero");

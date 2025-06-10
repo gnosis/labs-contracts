@@ -6,7 +6,7 @@ import "circles-v2/lift/IERC20Lift.sol";
 contract MockHubCRCPMs {
     address public wrappedToken;
 
-    function wrap(address token, uint256 amount, CirclesType _type) external returns (address) {
+    function wrap(address token, uint256, CirclesType) external returns (address) {
         require(token != address(0), "Invalid token address");
 
         // For testing purposes, we'll just return the same token address

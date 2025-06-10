@@ -104,23 +104,16 @@ contract BetContractFactory is Pausable, Ownable {
 
         // Create market if it doesn't exist
         if (!fpmmAddresses.contains(fpmmAddress)) {
-            liquidityVaultToken.addUpdater(address(this), fpmmAddress);
-            uint256 betContractIdentifier = fpmmAddresses.length();
-            LiquidityRemover liquidityRemover = new LiquidityRemover(
-                fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), address(this), conditionIds
-            );
-            liquidityVaultToken.addUpdater(address(liquidityRemover), fpmmAddress);
-            LiquidityAdder liquidityAdder = new LiquidityAdder(
-                fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), conditionIds.length
-            );
-            liquidityVaultToken.addUpdater(address(liquidityAdder), fpmmAddress);
-            // ToDo - call approve on liquidityAdder and Remover with infinite amount
+            (LiquidityRemover liquidityRemover, LiquidityAdder liquidityAdder) =
+                createLiquidityContracts(fpmmAddress, groupCRCToken, conditionIds);
+
             address[] memory spenders = new address[](2);
             spenders[0] = address(liquidityAdder);
             spenders[1] = address(liquidityRemover);
             liquidityVaultToken.approveMarketMakerLPTokensSpend(fpmmAddress, spenders);
 
             address[] memory betContracts = new address[](outcomeIndexes.length);
+            uint256 betContractIdentifier = fpmmAddresses.length();
             for (uint8 outcomeIdx = 0; outcomeIdx < outcomeIndexes.length; outcomeIdx++) {
                 address betContractAddr = createBetContract(
                     fpmmAddress,
@@ -146,5 +139,22 @@ contract BetContractFactory is Pausable, Ownable {
             });
             fpmmAddresses.add(fpmmAddress);
         }
+    }
+
+    function createLiquidityContracts(address fpmmAddress, address groupCRCToken, bytes32[] memory conditionIds)
+        internal
+        returns (LiquidityRemover, LiquidityAdder)
+    {
+        liquidityVaultToken.addUpdater(address(this), fpmmAddress);
+
+        LiquidityRemover liquidityRemover = new LiquidityRemover(
+            fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), address(this), conditionIds
+        );
+        liquidityVaultToken.addUpdater(address(liquidityRemover), fpmmAddress);
+        LiquidityAdder liquidityAdder = new LiquidityAdder(
+            fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), conditionIds.length
+        );
+        liquidityVaultToken.addUpdater(address(liquidityAdder), fpmmAddress);
+        return (liquidityRemover, liquidityAdder);
     }
 }
