@@ -5,5 +5,6 @@ struct Prediction {
     address publisherAddress;
     bytes32 ipfsHash;
     bytes32[] txHashes;
-    uint16 estimatedProbabilityBps; // in basis points, 0-10000
+    bytes32[] outcomeHashes; // Identifiers for each outcome (e.g., keccak256("Yes"), keccak256("No"), etc.)
+    uint16[] estimatedProbabilitiesBps; // Probabilities for each outcome, in basis points, should sum to 10000
 }
