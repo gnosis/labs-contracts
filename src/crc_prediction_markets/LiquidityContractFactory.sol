@@ -5,6 +5,7 @@ import "./LiquidityRemover.sol";
 import "./LiquidityAdder.sol";
 import "./IFixedProductMarketMaker.sol";
 import "./LiquidityVaultToken.sol";
+import {console} from "forge-std/console.sol";
 
 contract LiquidityContractFactory {
     function createLiquidityContracts(
@@ -14,7 +15,9 @@ contract LiquidityContractFactory {
         address fpmmAddress,
         bytes32[] memory conditionIds
     ) public returns (address, address) {
-        address collateralTokenAddress = IFixedProductMarketMaker(fpmmAddress).collateralToken();
+        console.log("entered createLiquidityContracts");
+        address collateralTokenAddress = address(IFixedProductMarketMaker(fpmmAddress).collateralToken());
+        console.log("createLiquidityContracts, after collateralToken()");
         LiquidityRemover liquidityRemover = new LiquidityRemover(
             fpmmAddress,
             hubAddress,
@@ -24,6 +27,7 @@ contract LiquidityContractFactory {
             address(this),
             conditionIds
         );
+        console.log("createLiquidityContracts, after LiquidityRemover");
         LiquidityAdder liquidityAdder = new LiquidityAdder(
             fpmmAddress,
             hubAddress,
@@ -32,7 +36,7 @@ contract LiquidityContractFactory {
             liquidityVaultTokenAddress,
             conditionIds.length
         );
-
+        console.log("createLiquidityContracts, after LiquidityAdder");
         return (address(liquidityRemover), address(liquidityAdder));
     }
 }

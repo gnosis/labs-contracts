@@ -188,6 +188,7 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         override
         returns (bytes4)
     {
+        require(msg.sender == address(hub), "Only hub can be the sender");
         // We only place bet if we received groupCRC tokens
         if (groupCRCToken == address(uint160(id))) {
             placeBet(value, from);
