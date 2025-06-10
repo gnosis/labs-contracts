@@ -31,23 +31,13 @@ contract BetContractFactoryTest is FPMMTestHelper {
     bytes32[] conditionIds;
 
     function setUp() public {
-        // Deploy mock contracts
-        console.log("before setup fpmm betContractFactory");
         _setupFPMMEnvironment();
-        console.log("after setup fpmm betContractFactory");
-        //MockERC20 mockToken = new MockERC20("Test Token", "TEST");
-        //groupCRCToken = address(mockToken);
 
-        //fpmm = new MockFixedProductMarketMaker(group, OUTCOME_SLOT_COUNT, CONDITION_ID);
-
-        // Set addresses
-        //fpmmAddress = address(fpmm);
         groupTokenAddress = address(group);
         hubAddress = address(hub);
 
         conditionIds = buildMockConditionIds();
 
-        // Deploy factory
         factory = new BetContractFactory(hubAddress);
     }
 
@@ -125,7 +115,7 @@ contract BetContractFactoryTest is FPMMTestHelper {
 
     function testCannotCreateWithZeroAddresses() public {
         // Test with zero FPMM address
-        console.log("testCannotCreateWithZeroAddresses");
+
         vm.expectRevert("Invalid FPMM address");
         uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
         bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
@@ -133,7 +123,7 @@ contract BetContractFactoryTest is FPMMTestHelper {
         factory.createContractsForFpmm(
             address(0), groupTokenAddress, outcomeIndexes, conditionIds, organizationNames, organizationMetadataDigests
         );
-        console.log("first test passed");
+
         // Test with zero group CRC token address
         vm.expectRevert("Invalid group CRC token address");
 
@@ -156,16 +146,13 @@ contract BetContractFactoryTest is FPMMTestHelper {
             buildOrganizationNames(),
             buildOrganizationMetadataDigests()
         );
-        console.log("after fpmm creation");
+
         // Get market info
         MarketInfo memory marketInfo = factory.getMarketInfo(fpmmMarketId);
-
-        console.log("1 testBetContractCreation");
 
         // Verify bet contracts
         for (uint256 i = 0; i < 2; i++) {
             BetContract betContract = BetContract(marketInfo.betContracts[i]);
-            console.log("2");
             assertEq(address(betContract.fpmm()), fpmmMarketId, "FPMM address should match");
             assertEq(address(betContract.groupCRCToken()), groupTokenAddress, "Group CRC token should match");
             assertEq(betContract.outcomeIndex(), i, "Outcome index should match");
@@ -182,7 +169,6 @@ contract BetContractFactoryTest is FPMMTestHelper {
 
     function testAddLiquidity() public {
         // Create bet contracts
-        console.log("entered testAddLiquidity");
         uint256[] memory outcomeIndexes = new uint256[](2);
         outcomeIndexes[0] = 0;
         outcomeIndexes[1] = 1;
@@ -198,7 +184,6 @@ contract BetContractFactoryTest is FPMMTestHelper {
         // verify liquidity info
         LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
         LiquidityAdder liquidityAdder = LiquidityAdder(liquidityInfo.liquidityAdder);
-        console.logAddress(address(liquidityAdder));
 
         // mint CRC group tokens
         address alice = addresses[0];
@@ -207,8 +192,6 @@ contract BetContractFactoryTest is FPMMTestHelper {
 
         // send group CRC tokens to liquidityAdder
         vm.prank(alice);
-        console.log("destination");
-        console.logAddress(address(liquidityAdder));
         hub.safeTransferFrom(alice, address(liquidityAdder), uint256(uint160(group)), amount, "");
         vm.stopPrank();
 
@@ -217,9 +200,36 @@ contract BetContractFactoryTest is FPMMTestHelper {
         assertTrue(lpTokensBalance > 0);
     }
 
+    function testCannotCreateContractsWhenPaused() public {
+        // Pause the factory
+        vm.prank(factory.owner());
+        factory.pause();
+
+        // Prepare test data
+        uint256[] memory outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = 0;
+        outcomeIndexes[1] = 1;
+
+        bytes32[] memory conditionIds = new bytes32[](1);
+        conditionIds[0] = keccak256("test-condition");
+
+        string[] memory orgNames = new string[](2);
+        orgNames[0] = "Org1";
+        orgNames[1] = "Org2";
+
+        bytes32[] memory orgMetadata = new bytes32[](2);
+        orgMetadata[0] = keccak256("metadata1");
+        orgMetadata[1] = keccak256("metadata2");
+
+        // Should revert with EnforcedPause error when trying to create contracts
+        vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
+        factory.createContractsForFpmm(
+            address(fpmm), groupTokenAddress, outcomeIndexes, conditionIds, orgNames, orgMetadata
+        );
+    }
+
     function testRemoveLiquidity() public {
         // Create bet contracts
-        console.log("entered testRemoveLiquidity");
         uint256[] memory outcomeIndexes = new uint256[](2);
         outcomeIndexes[0] = 0;
         outcomeIndexes[1] = 1;
@@ -246,25 +256,17 @@ contract BetContractFactoryTest is FPMMTestHelper {
         vm.prank(alice);
 
         // first we add some lp shares
-        console.log("before add, removeLiquidity");
         hub.safeTransferFrom(alice, liquidityAdder, uint256(uint160(group)), amount, "");
         // here Alice should have a balance on LV, and LV should have a balance on fpmm
         uint256 balanceAlice1 = liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
-        console.log("balance Alice", balanceAlice1);
         uint256 balanceLV1 = IERC20(fpmmMarketId).balanceOf(address(liquidityVaultToken));
-        console.log("balance LV after alice", balanceLV1);
 
-        console.log("after add, removeLiquidity");
         // then we remove the lp shares
         uint256 sharesAfterDeposit =
             liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
-        console.log("shares after deposit", sharesAfterDeposit);
         uint256 balanceAdder = IERC20(fpmmMarketId).balanceOf(liquidityAdder);
         uint256 balanceRemover = IERC20(fpmmMarketId).balanceOf(liquidityRemover);
         uint256 balanceLV = IERC20(fpmmMarketId).balanceOf(address(liquidityVaultToken));
-        console.log("balance adder", balanceAdder);
-        console.log("balance remover", balanceRemover);
-        console.log("balance liquidity vault", balanceLV);
         // ToDo - LP tokens must be transferred to LiquidityVault, who should do the handling
         vm.prank(alice);
         hub.safeTransferFrom(alice, liquidityRemover, uint256(uint160(group)), amount, "");
@@ -293,7 +295,6 @@ contract BetContractFactoryTest is FPMMTestHelper {
         uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
         bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
         string[] memory organizationNames = buildOrganizationNames();
-        console.log("before create bet contract");
         factory.createContractsForFpmm(
             fpmmMarketId,
             groupTokenAddress,
@@ -302,11 +303,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
             organizationNames,
             organizationMetadataDigests
         );
-        console.log("after create bet contract");
 
         // Verify FPMM address is tracked
         assertTrue(factory.fpmmAlreadyProcessed(fpmmMarketId), "FPMM address should be tracked");
-        console.log("after first verify");
 
         // Create another market
         MockFixedProductMarketMaker mockFpmm = new MockFixedProductMarketMaker(group, OUTCOME_SLOT_COUNT, CONDITION_ID);
@@ -323,10 +322,8 @@ contract BetContractFactoryTest is FPMMTestHelper {
             organizationNames,
             organizationMetadataDigests
         );
-        console.log("before assert");
         // Verify both FPMM addresses are tracked
         assertTrue(factory.fpmmAlreadyProcessed(fpmmMarketId), "First FPMM address should still be tracked");
-        console.log("after first assert");
         assertTrue(factory.fpmmAlreadyProcessed(address(mockFpmm)), "Second FPMM address should be tracked");
     }
 }

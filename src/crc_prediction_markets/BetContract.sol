@@ -74,7 +74,6 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         string memory organizationId = string.concat(
             "Bet contract #", Strings.toString(betContractIdentifier), " - outcome ", Strings.toString(outcomeIndex)
         );
-        console.log("organizationId", organizationId);
         return organizationId;
     }
 

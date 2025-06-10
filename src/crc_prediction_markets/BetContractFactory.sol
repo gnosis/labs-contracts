@@ -84,7 +84,7 @@ contract BetContractFactory is Pausable, Ownable {
             betContractIdentifier,
             organizationName,
             organizationMetadataDigest,
-            address(liquidityRemover)
+            liquidityRemover
         );
         emit BetContractDeployed(address(betContract), outcomeIndex);
 
@@ -104,20 +104,16 @@ contract BetContractFactory is Pausable, Ownable {
 
         // Create market if it doesn't exist
         if (!fpmmAddresses.contains(fpmmAddress)) {
-            console.log("1 Bet Contract Factory");
             liquidityVaultToken.addUpdater(address(this), fpmmAddress);
             uint256 betContractIdentifier = fpmmAddresses.length();
-            console.log("2");
             LiquidityRemover liquidityRemover = new LiquidityRemover(
                 fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), address(this), conditionIds
             );
             liquidityVaultToken.addUpdater(address(liquidityRemover), fpmmAddress);
-            console.log("3");
             LiquidityAdder liquidityAdder = new LiquidityAdder(
                 fpmmAddress, hubAddress, groupCRCToken, address(liquidityVaultToken), conditionIds.length
             );
             liquidityVaultToken.addUpdater(address(liquidityAdder), fpmmAddress);
-            console.log("4");
             // ToDo - call approve on liquidityAdder and Remover with infinite amount
             address[] memory spenders = new address[](2);
             spenders[0] = address(liquidityAdder);
@@ -126,7 +122,6 @@ contract BetContractFactory is Pausable, Ownable {
 
             address[] memory betContracts = new address[](outcomeIndexes.length);
             for (uint8 outcomeIdx = 0; outcomeIdx < outcomeIndexes.length; outcomeIdx++) {
-                console.log("5");
                 address betContractAddr = createBetContract(
                     fpmmAddress,
                     groupCRCToken,
@@ -138,7 +133,6 @@ contract BetContractFactory is Pausable, Ownable {
                 );
                 betContracts[outcomeIdx] = betContractAddr;
             }
-            console.log("6");
             fpmmToBetContracts[fpmmAddress] = MarketInfo({
                 fpmmAddress: fpmmAddress,
                 groupCRCToken: groupCRCToken,
@@ -150,7 +144,6 @@ contract BetContractFactory is Pausable, Ownable {
                 liquidityRemover: address(liquidityRemover),
                 liquidityVaultToken: address(liquidityVaultToken)
             });
-            console.log("7");
             fpmmAddresses.add(fpmmAddress);
         }
     }

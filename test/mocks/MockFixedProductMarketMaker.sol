@@ -42,32 +42,25 @@ contract MockFixedProductMarketMaker is ERC20 {
     // External state-changing functions
 
     function buy(uint256 amount, uint256 outcomeIndex, uint256 minShares) external {
-        console.log("entered buy");
         require(outcomeIndex < outcomeSlotCount, "Invalid outcome index");
         require(amount > 0, "Amount must be greater than 0");
 
         // Transfer collateral from buyer
-        console.log("before transfer");
         IERC20(collateralToken).transferFrom(msg.sender, address(this), amount);
 
         // Calculate shares (5% fee)
-        console.log("calculating shares");
         uint256 shares = amount * 95 / 100;
         require(shares >= minShares, "Insufficient shares");
 
         // Update outcome prices
-        console.log("updating outcome prices", shares);
         outcomePrices[outcomeIndex] += shares;
 
         // Transfer shares to buyer
-        console.log("before transfer to buyer", shares);
         uint256 balanceOfContract = ERC20(collateralToken).balanceOf(address(this));
-        console.log("balanceOfContract", balanceOfContract);
         // ToDo Add actual transfer via ConditionalTokens
         //ERC20(collateralToken).safeTransferFrom(address(this), msg.sender, outcomeIndex, shares, "");
 
         // Emit event
-        console.log("before event is emitted");
         emit FPMMBuy(msg.sender, amount, amount * 5 / 100, outcomeIndex, shares);
     }
 
@@ -82,7 +75,6 @@ contract MockFixedProductMarketMaker is ERC20 {
     }
 
     function removeFunding(uint256 sharesToBurn) external {
-        console.log("shares from caller", balanceOf(msg.sender));
         _burn(msg.sender, sharesToBurn);
         // outcome tokens are also in reality transferred back to users (not done in this mock)
     }
