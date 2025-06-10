@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {console} from "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
@@ -47,15 +46,6 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
     // Events
     event LiquidityRemoved(address indexed provider, uint256 amount, uint256 sharesBurned);
 
-    /**
-     * @dev Constructor initializes the LiquidityManager with the market maker address
-     * @param _marketMaker Address of the FixedProductMarketMaker contract
-     */
-    /**
-     * @dev Constructor initializes the LiquidityManager with the market maker and hub addresses
-     * @param _marketMaker Address of the FixedProductMarketMaker contract
-     * @param _hubAddress Address of the Circles Hub contract
-     */
     constructor(
         address _marketMaker,
         address _hubAddress,
@@ -64,44 +54,26 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
         address _betContractFactory,
         bytes32[] memory _conditionIds
     ) {
-        console.log("entered liqu Remover constructor");
-        console.log("market maker addr liq remover", _marketMaker);
         require(_marketMaker != address(0), "Invalid FPMM");
         require(_hubAddress != address(0), "Invalid hub address");
         require(_groupCRCToken != address(0), "Invalid group CRC token address");
         require(_liquidityVaultToken != address(0), "Invalid liquidity vault token address");
         require(_conditionIds.length > 0, "No conditions found");
-        console.log("after requires Liq Remover");
 
         marketMaker = IFixedProductMarketMaker(_marketMaker);
-        console.log("11 liq remover");
         collateralToken = IERC20(marketMaker.collateralToken());
-        console.log("12 liq remover");
         hub = Hub(_hubAddress);
-        console.log("13 liq remover");
         groupCRCToken = _groupCRCToken;
-        console.log("14 liq remover");
         liquidityVaultToken = LiquidityVaultToken(_liquidityVaultToken);
-        console.log("15 liq remover");
         betContractFactory = BetContractFactory(_betContractFactory);
-        console.log("16 liq remover");
         conditionIds = _conditionIds;
-
-        console.log("before wrap Liq Remover");
 
         // Wrap the collateral token for ERC1155 support
         wrappedCollateralToken = hub.wrap(groupCRCToken, 0, CirclesType.Inflation);
-        console.log("after wrap liq remover constr");
-
-        // Approve the wrapped token for transfers
-        //collateralToken.approve(address(hub), type(uint256).max);
-        console.log("after approve liq remover");
     }
 
-    function removeAllLiquidityFromUser(address user) public nonReentrant {
-        console.log("remove all liquidity from user", liquidityVaultToken.parseAddress(address(marketMaker)));
+    function removeAllLiquidityFromUser(address user) private nonReentrant {
         uint256 shares = liquidityVaultToken.balanceOf(user, liquidityVaultToken.parseAddress(address(marketMaker)));
-        console.log("removeAllLiquidityFromUser shares", shares);
         require(shares > 0, "Insufficient balance");
         liquidityVaultToken.burnFrom(user, address(marketMaker), shares);
 
@@ -109,7 +81,6 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
         // get burned by MarketMaker.
         IERC20(address(marketMaker)).transferFrom(address(liquidityVaultToken), address(this), shares);
         marketMaker.removeFunding(shares);
-        console.log("before conditional tokens");
         IConditionalTokens conditionalTokens = IConditionalTokens(address(marketMaker.conditionalTokens()));
 
         // Get all bet contracts for this market
@@ -119,7 +90,6 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
 
         // Convert addresses to BetContract instances
         BetContract[] memory betContracts = new BetContract[](numBetContracts);
-        console.log("liq remover, before for");
         for (uint256 i = 0; i < numBetContracts; i++) {
             betContracts[i] = BetContract(marketInfo.betContracts[i]);
         }
@@ -156,16 +126,6 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
         emit LiquidityRemoved(user, collateralBalance, shares);
     }
 
-    /**
-     * @dev ERC1155 token received hook
-     * @notice Called when ERC1155 tokens are transferred to this contract
-     * @param operator The address which called the function
-     * @param from The address which previously owned the token
-     * @param id The ID of the token being transferred
-     * @param value The amount of tokens being transferred
-     * @param data Additional data with no specified format
-     * @return bytes4 `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))`
-     */
     function onERC1155Received(address operator, address from, uint256 id, uint256 value, bytes memory data)
         public
         virtual

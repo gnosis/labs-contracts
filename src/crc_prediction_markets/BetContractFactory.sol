@@ -3,9 +3,10 @@ pragma solidity ^0.8.0;
 
 import "./BetContract.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./LiquidityRemover.sol";
 import "./LiquidityAdder.sol";
-import {console} from "forge-std/console.sol";
 
 // Struct to store market information
 struct MarketInfo {
@@ -21,16 +22,24 @@ struct LiquidityInfo {
     address liquidityRemover;
 }
 
-contract BetContractFactory {
+contract BetContractFactory is Pausable, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address public hubAddress;
     // for holding LP shares of fixed product market makers
     LiquidityVaultToken public liquidityVaultToken;
 
-    constructor(address _hubAddress) {
+    constructor(address _hubAddress) Ownable(msg.sender) {
         hubAddress = _hubAddress;
         liquidityVaultToken = new LiquidityVaultToken();
+    }
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     event BetContractDeployed(address indexed betContract, uint256 indexed outcomeIndex);
@@ -66,7 +75,7 @@ contract BetContractFactory {
         string memory organizationName,
         bytes32 organizationMetadataDigest,
         address liquidityRemover
-    ) private returns (address) {
+    ) private whenNotPaused returns (address) {
         BetContract betContract = new BetContract(
             fpmmAddress,
             groupCRCToken,
@@ -89,7 +98,7 @@ contract BetContractFactory {
         bytes32[] memory conditionIds,
         string[] memory organizationNames,
         bytes32[] memory organizationMetadataDigests
-    ) external {
+    ) external whenNotPaused {
         require(fpmmAddress != address(0), "Invalid FPMM address");
         require(groupCRCToken != address(0), "Invalid group CRC token address");
 

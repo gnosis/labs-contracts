@@ -9,14 +9,16 @@ import "circles-contracts-v2/hub/Hub.sol";
 import "circles-contracts-v2/lift/IERC20Lift.sol";
 import "./utils/BettingUtils.sol";
 import "./LiquidityVaultToken.sol";
-import {console} from "forge-std/console.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title LiquidityManager
  * @dev Manages liquidity provisioning to FixedProductMarketMaker contracts
  */
-contract LiquidityAdder is ERC1155Holder {
+contract LiquidityAdder is ERC1155Holder, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
+    error InvalidAddress();
 
     // Address of the FixedProductMarketMaker contract
     IFixedProductMarketMaker public immutable marketMaker;
@@ -48,7 +50,6 @@ contract LiquidityAdder is ERC1155Holder {
         address _liquidityVaultToken,
         uint256 _slotCount
     ) {
-        console.log("market maker addr liq adder", _marketMaker);
         require(_marketMaker != address(0), "Invalid market maker address");
         require(_hubAddress != address(0), "Invalid hub address");
         require(_groupCRCToken != address(0), "Invalid group CRC token address");
@@ -56,40 +57,37 @@ contract LiquidityAdder is ERC1155Holder {
 
         marketMaker = IFixedProductMarketMaker(_marketMaker);
         collateralToken = IERC20(marketMaker.collateralToken());
-        console.log("collateral token");
-        console.logAddress(address(collateralToken));
         hub = Hub(_hubAddress);
         groupCRCToken = _groupCRCToken;
         liquidityVaultToken = LiquidityVaultToken(_liquidityVaultToken);
         slotCount = _slotCount;
 
         // Wrap the collateral token for ERC1155 support
-        console.log("before wrap liq adder");
 
         wrappedCollateralToken = hub.wrap(groupCRCToken, 0, CirclesType.Inflation);
-        console.log("after wrap liq adder");
-
-        // Approve the wrapped token for transfers
-        //collateralToken.approve(address(hub), type(uint256).max);
     }
 
-    function addLiquidity(uint256 amount, address better) public returns (uint256) {
+    modifier validAddress(address addr) {
+        if (addr == address(0)) revert InvalidAddress();
+        _;
+    }
+
+    function _ensureApproval(uint256 amount) private {
+        uint256 allowance = collateralToken.allowance(address(this), address(marketMaker));
+        if (allowance < amount) {
+            collateralToken.approve(address(marketMaker), amount);
+        }
+    }
+
+    function addLiquidity(uint256 amount, address better) private validAddress(better) nonReentrant returns (uint256) {
         require(amount > 0, "Amount must be greater than 0");
-        require(better != address(0), "Invalid better address");
 
         uint256 amountToBet = BettingUtils.defineAmountToBet(
             hub, wrappedCollateralToken, address(groupCRCToken), amount, CirclesType.Inflation
         );
         uint256[] memory distributionHint = new uint256[](slotCount);
 
-        console.log("liq adder, addLiquidity, before allowance");
-        console.logAddress(address(collateralToken));
-        uint256 allowance = collateralToken.allowance(address(this), address(marketMaker));
-        console.log("liq adder, addLiquidity, after allowance");
-        if (allowance < amountToBet) {
-            console.log("liq adder, addLiquidity, before approve");
-            collateralToken.approve(address(marketMaker), amountToBet);
-        }
+        _ensureApproval(amountToBet);
 
         // We add liquidity in equal amounts to all outcomes
         // Hence no need to fill distributionHint
@@ -97,11 +95,9 @@ contract LiquidityAdder is ERC1155Holder {
         marketMaker.addFunding(amountToBet, distributionHint);
 
         uint256 postBalance = IERC20(address(marketMaker)).balanceOf(address(this));
-        console.log("addLiquidity, after addFunding, balance diff", postBalance - prevBalance);
         IERC20(address(marketMaker)).transfer(address(liquidityVaultToken), postBalance - prevBalance);
 
         uint256 shares = marketMaker.balanceOf(address(liquidityVaultToken));
-        console.log("liq adder, addLiquidity, shares LV", shares);
         liquidityVaultToken.mintTo(better, address(marketMaker), shares, "");
 
         emit LiquidityAdded(better, amountToBet, shares);
