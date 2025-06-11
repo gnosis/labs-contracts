@@ -7,7 +7,7 @@ contract AgentResultMapping {
     event PredictionAdded(
         address indexed marketAddress,
         address indexed publisherAddress,
-        bytes32[] outcomeHashes,
+        string[] outcomes,
         uint16[] estimatedProbabilitiesBps,
         bytes32[] txHashes,
         bytes32 ipfsHash
@@ -28,14 +28,14 @@ contract AgentResultMapping {
     function addPrediction(address marketAddress, Prediction memory prediction) public {
         require(msg.sender == prediction.publisherAddress, "Only publisher can add a prediction");
         require(
-            prediction.outcomeHashes.length == prediction.estimatedProbabilitiesBps.length,
+            prediction.outcomes.length == prediction.estimatedProbabilitiesBps.length,
             "Outcome/probability length mismatch"
         );
         marketPredictions[marketAddress].push(prediction);
         emit PredictionAdded(
             marketAddress,
             prediction.publisherAddress,
-            prediction.outcomeHashes,
+            prediction.outcomes,
             prediction.estimatedProbabilitiesBps,
             prediction.txHashes,
             prediction.ipfsHash

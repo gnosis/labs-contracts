@@ -2,9 +2,10 @@
 pragma solidity ^0.8.24;
 
 struct Prediction {
+    address marketAddress;
     address publisherAddress;
     bytes32 ipfsHash;
     bytes32[] txHashes;
-    bytes32[] outcomeHashes; // Identifiers for each outcome (e.g., keccak256("Yes"), keccak256("No"), etc.)
+    string[] outcomes; // Outcomes in the same order as estimatedProbabilitiesBps
     uint16[] estimatedProbabilitiesBps; // Probabilities for each outcome, in basis points, should sum to 10000
 }

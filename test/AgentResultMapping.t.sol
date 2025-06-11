@@ -11,8 +11,8 @@ contract AgentResultMappingTest is Test {
     address marketAddress;
 
     // Example categorical outcomes
-    bytes32 constant OUTCOME_YES = keccak256("Yes");
-    bytes32 constant OUTCOME_NO = keccak256("No");
+    string constant OUTCOME_YES = "Yes";
+    string constant OUTCOME_NO = "No";
 
     function setUp() public {
         agentResultMapping = new AgentResultMapping("TestingPlatform");
@@ -27,9 +27,9 @@ contract AgentResultMappingTest is Test {
         bytes32 dummyTxHash = keccak256(abi.encodePacked("dummy transaction hash"));
 
         // Categorical outcomes: Yes/No
-        bytes32[] memory outcomeHashes = new bytes32[](2);
-        outcomeHashes[0] = OUTCOME_YES;
-        outcomeHashes[1] = OUTCOME_NO;
+        string[] memory outcomes = new string[](2);
+        outcomes[0] = OUTCOME_YES;
+        outcomes[1] = OUTCOME_NO;
 
         // Probabilities for each outcome, must sum to 10000 (basis points)
         uint16[] memory estimatedProbabilitiesBps = new uint16[](2);
@@ -42,10 +42,11 @@ contract AgentResultMappingTest is Test {
         txHashes[1] = dummyTxHash;
 
         Prediction memory prediction = Prediction({
+            marketAddress: marketAddress,
             publisherAddress: publisher,
             ipfsHash: ipfsHash,
             txHashes: txHashes,
-            outcomeHashes: outcomeHashes,
+            outcomes: outcomes,
             estimatedProbabilitiesBps: estimatedProbabilitiesBps
         });
         return prediction;
@@ -68,9 +69,9 @@ contract AgentResultMappingTest is Test {
         assertEq(predictions[1].ipfsHash, expectedHash2);
 
         // Also check categorical outcomes and probabilities
-        assertEq(predictions[0].outcomeHashes.length, 2);
-        assertEq(predictions[0].outcomeHashes[0], OUTCOME_YES);
-        assertEq(predictions[0].outcomeHashes[1], OUTCOME_NO);
+        assertEq(predictions[0].outcomes.length, 2);
+        assertEq(predictions[0].outcomes[0], OUTCOME_YES);
+        assertEq(predictions[0].outcomes[1], OUTCOME_NO);
         assertEq(predictions[0].estimatedProbabilitiesBps[0], 6556);
         assertEq(predictions[0].estimatedProbabilitiesBps[1], 3444);
     }
@@ -92,7 +93,7 @@ contract AgentResultMappingTest is Test {
         emit AgentResultMapping.PredictionAdded(
             marketAddress,
             prediction.publisherAddress,
-            prediction.outcomeHashes,
+            prediction.outcomes,
             prediction.estimatedProbabilitiesBps,
             prediction.txHashes,
             prediction.ipfsHash
@@ -115,9 +116,9 @@ contract AgentResultMappingTest is Test {
         assertEq(prediction3.ipfsHash, hash3);
 
         // Check categorical outcomes and probabilities for one of the predictions
-        assertEq(prediction1.outcomeHashes.length, 2);
-        assertEq(prediction1.outcomeHashes[0], OUTCOME_YES);
-        assertEq(prediction1.outcomeHashes[1], OUTCOME_NO);
+        assertEq(prediction1.outcomes.length, 2);
+        assertEq(prediction1.outcomes[0], OUTCOME_YES);
+        assertEq(prediction1.outcomes[1], OUTCOME_NO);
         assertEq(prediction1.estimatedProbabilitiesBps[0], 6556);
         assertEq(prediction1.estimatedProbabilitiesBps[1], 3444);
 
