@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./utils/BettingUtils.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "./IFixedProductMarketMaker.sol";
 import "circles-contracts-v2/hub/Hub.sol";
@@ -14,7 +15,7 @@ import "./BetContract.sol";
 import "./CTHelpers.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
+contract LiquidityRemover is ERC1155Holder, ReentrancyGuard, BettingUtils {
     using SafeERC20 for IERC20;
 
     // Address of the FixedProductMarketMaker contract
@@ -127,6 +128,7 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard {
         public
         virtual
         override
+        onlyHub(address(hub))
         returns (bytes4)
     {
         // Only process if the received token is our wrapped collateral token

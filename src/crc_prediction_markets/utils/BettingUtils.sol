@@ -13,6 +13,15 @@ using EnumerableMap for EnumerableMap.AddressToUintMap;
  * @dev Utility functions for betting operations
  */
 abstract contract BettingUtils {
+    error NotHubError(address wrongAddress);
+
+    modifier onlyHub(address hubAddress) {
+        if (msg.sender != hubAddress) {
+            revert NotHubError(msg.sender);
+        }
+        _;
+    }
+
     function defineAmountToBet(
         address hubAddress,
         address erc20Token,

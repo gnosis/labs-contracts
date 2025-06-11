@@ -190,7 +190,7 @@ contract BetContractFactoryTest is FPMMTestHelper {
         // mint CRC group tokens
         address alice = addresses[0];
         uint256 amount = 1 * CRC;
-        mintToGroup(alice, amount);
+        mintToGroup(group, alice, amount);
 
         // send group CRC tokens to liquidityAdder
         vm.prank(alice);
@@ -198,7 +198,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
         vm.stopPrank();
 
         LiquidityVaultToken liquidityVaultToken = LiquidityVaultToken(liquidityInfo.liquidityVaultToken);
+
         uint256 lpTokensBalance = liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
+
         assertTrue(lpTokensBalance > 0);
     }
 
@@ -226,7 +228,7 @@ contract BetContractFactoryTest is FPMMTestHelper {
         // Should revert with EnforcedPause error when trying to create contracts
         vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
         factory.createContractsForFpmm(
-            address(fpmm), groupTokenAddress, outcomeIndexes, _conditionIds, orgNames, orgMetadata
+            fpmmMarketId, groupTokenAddress, outcomeIndexes, _conditionIds, orgNames, orgMetadata
         );
     }
 
@@ -252,7 +254,8 @@ contract BetContractFactoryTest is FPMMTestHelper {
         // mint CRC group tokens
         address alice = addresses[0];
         uint256 amount = 1 * CRC;
-        mintToGroup(alice, 10 * CRC);
+
+        mintToGroup(groupTokenAddress, alice, amount);
 
         // send group CRC tokens to liquidityAdder
         vm.prank(alice);
@@ -261,11 +264,13 @@ contract BetContractFactoryTest is FPMMTestHelper {
         hub.safeTransferFrom(alice, liquidityAdder, uint256(uint160(group)), amount, "");
 
         // then we remove the lp shares
+        mintToGroup(groupTokenAddress, alice, amount);
         vm.prank(alice);
         hub.safeTransferFrom(alice, liquidityRemover, uint256(uint160(group)), amount, "");
 
         LiquidityVaultToken liquidityVaultToken = LiquidityVaultToken(liquidityInfo.liquidityVaultToken);
         uint256 lpTokensBalance = liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
+        console.log("5", lpTokensBalance);
         assertTrue(lpTokensBalance == 0);
     }
 
@@ -318,5 +323,34 @@ contract BetContractFactoryTest is FPMMTestHelper {
         // Verify both FPMM addresses are tracked
         assertTrue(factory.fpmmAlreadyProcessed(fpmmMarketId), "First FPMM address should still be tracked");
         assertTrue(factory.fpmmAlreadyProcessed(address(mockFpmm)), "Second FPMM address should be tracked");
+    }
+
+    function testSendERC1155ToBetContractFactoryWithoutBeingHub() public {
+        // Create bet contracts
+        uint256[] memory outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = 0;
+        outcomeIndexes[1] = 1;
+
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildOrganizationNames(),
+            buildOrganizationMetadataDigests()
+        );
+        // verify liquidity info
+        LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
+        LiquidityAdder liquidityAdder = LiquidityAdder(liquidityInfo.liquidityAdder);
+
+        // mint CRC group tokens
+        address alice = addresses[0];
+        uint256 amount = 1 * CRC;
+        mintToGroup(group, alice, amount);
+
+        // send group CRC tokens to liquidityAdder
+        vm.prank(alice);
+        vm.expectRevert(abi.encodeWithSelector(BettingUtils.NotHubError.selector, alice));
+        liquidityAdder.onERC1155Received(alice, address(liquidityAdder), uint256(uint160(group)), amount, "");
     }
 }

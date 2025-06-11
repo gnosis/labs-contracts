@@ -74,12 +74,12 @@ contract FPMMTestHelper is Test, GroupSetup, IHubErrors {
     }
 
     // Helper to mint tokens to a group
-    function mintToGroup(address minter, uint256 amount) public {
+    function mintToGroup(address _group, address minter, uint256 amount) public {
         address[] memory avatars = new address[](1);
         uint256[] memory amounts = new uint256[](1);
         avatars[0] = minter;
         amounts[0] = amount;
         vm.prank(minter);
-        hub.groupMint(group, avatars, amounts, "");
+        hub.groupMint(_group, avatars, amounts, "");
     }
 }

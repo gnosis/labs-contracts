@@ -121,14 +121,14 @@ contract BetContractFactory is Ownable, Pausable {
         bytes32[] memory conditionIds,
         string[] memory organizationNames,
         bytes32[] memory organizationMetadataDigests
-    ) external {
+    ) external whenNotPaused {
         require(fpmmAddress != address(0), "Invalid FPMM address");
         require(groupCRCToken != address(0), "Invalid group CRC token address");
 
         // Create market if it doesn't exist
         if (!fpmmAddresses.contains(fpmmAddress)) {
             (address liquidityRemover, address liquidityAdder) = liquidityContractFactory.createLiquidityContracts(
-                hubAddress, address(liquidityVaultToken), groupCRCToken, fpmmAddress, conditionIds
+                hubAddress, address(liquidityVaultToken), groupCRCToken, fpmmAddress, address(this), conditionIds
             );
             addRolesAndHandleApprovals(fpmmAddress, liquidityAdder, liquidityRemover);
 

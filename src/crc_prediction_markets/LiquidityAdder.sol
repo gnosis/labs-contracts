@@ -10,6 +10,7 @@ import "circles-contracts-v2/lift/IERC20Lift.sol";
 import "./utils/BettingUtils.sol";
 import "./LiquidityVaultToken.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "forge-std/console.sol";
 
 contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
     using SafeERC20 for IERC20;
@@ -18,9 +19,6 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
 
     // The collateral token used by the market
     address public immutable collateralTokenAddress;
-
-    // The wrapped ERC20 token address for the collateral
-    address public wrappedCollateralToken;
 
     // The Circles Hub contract
     Hub public immutable hub;
@@ -61,7 +59,7 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
 
     function addLiquidity(uint256 amount, address better) private nonReentrant returns (uint256) {
         uint256 amountToBet = BettingUtils.defineAmountToBet(
-            address(hub), wrappedCollateralToken, groupCRCToken, amount, CirclesType.Inflation
+            address(hub), collateralTokenAddress, groupCRCToken, amount, CirclesType.Inflation
         );
         uint256[] memory distributionHint = new uint256[](slotCount);
 
@@ -76,6 +74,7 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         marketMakerTokenAsToken.transfer(address(liquidityVaultToken), postBalance - prevBalance);
 
         uint256 shares = IFixedProductMarketMaker(marketMakerAddress).balanceOf(address(liquidityVaultToken));
+        console.log("shares alice", shares);
         liquidityVaultToken.mintTo(better, marketMakerAddress, shares, "");
 
         emit LiquidityAdded(better, amountToBet, shares);
@@ -86,6 +85,7 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         public
         virtual
         override
+        onlyHub(address(hub))
         returns (bytes4)
     {
         // Only process if the received token is our wrapped collateral token

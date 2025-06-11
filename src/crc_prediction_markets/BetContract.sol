@@ -9,8 +9,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-
 import "circles-v2/hub/Hub.sol";
+import "forge-std/console.sol";
 import "circles-v2/lift/IERC20Lift.sol";
 import "./utils/BettingUtils.sol";
 
@@ -186,9 +186,9 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         public
         virtual
         override
+        onlyHub(address(hub))
         returns (bytes4)
     {
-        require(msg.sender == address(hub), "Only hub can be the sender");
         // We only place bet if we received groupCRC tokens
         if (groupCRCToken == address(uint160(id))) {
             placeBet(value, from);
