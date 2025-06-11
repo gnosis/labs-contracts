@@ -6,6 +6,7 @@ struct Prediction {
     address publisherAddress;
     bytes32 ipfsHash;
     bytes32[] txHashes;
-    string[] outcomes; // Outcomes in the same order as estimatedProbabilitiesBps
+    // Both `outcomes` and `estimatedProbabilitiesBps` must be in the same order, as outcomes in the given market.
+    string[] outcomes;
     uint16[] estimatedProbabilitiesBps; // Probabilities for each outcome, in basis points, should sum to 10000
 }
