@@ -7,7 +7,8 @@ Repository holding the contracts made by Gnosis Labs team.
 | Contract Name           | Description                                           | Mainnet Address                                                                                                           | TheGraph                                                                                     |
 |-------------------------|-------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
 | OmenThumbnailMapping    | Manages IPFS hashes for market thumbnails on Omen 2.0 | [0xe0cf08311F03850497B0ed6A2cf067f1750C3eFc](https://gnosisscan.io/address/0xe0cf08311f03850497b0ed6a2cf067f1750c3efc#code) | [omen-thumbnailmapping](https://thegraph.com/studio/subgraph/omen-thumbnailmapping/)         |
-| OmenAgentResultMapping  | Maps prediction results to markets on Omen 2.0        | [0xbe1F6944496923683ca849fc0cC93fD10523cB83](https://gnosisscan.io/address/0x260E1077dEA98e738324A6cEfB0EE9A272eD471a#code) | [omen-agentresultmapping](https://thegraph.com/studio/subgraph/omen-agentresultmapping/)     |
+| OmenAgentResultMapping  | Maps prediction results to markets on Omen 2.0        | [0x99c43743A2dbd406160CC43cf08113b17178789c](https://gnosisscan.io/address/0x99c43743A2dbd406160CC43cf08113b17178789c#code) | TBA     |
+| SeerAgentResultMapping  | Maps prediction results to markets on Seer        | [0x1aafdfBD38EE92A4a74A44A1614E00894205074e](https://gnosisscan.io/address/0x1aafdfBD38EE92A4a74A44A1614E00894205074e#code) | TBA     |
 | Agent NFT               | Agent NFTs that control mechs for NFT game            | [0x0D7C0Bd4169D090038c6F41CFd066958fe7619D0](https://gnosisscan.io/address/0x0D7C0Bd4169D090038c6F41CFd066958fe7619D0#code) |  |
 | Agent Registry contract               | Simple contract storing active agent addresses            | [0xe8ae78b19c997b6da8189b1a644d4076f8bc880e](https://gnosisscan.io/address/0xe8ae78b19c997b6da8189b1a644d4076f8bc880e#code) |  |
 | Agent communication contract               | Simple contract storing message queue for each agent            | [0x219083Fc5315fdc145eE5C0eb22CbE12d6115c53](https://gnosisscan.io/address/0x219083Fc5315fdc145eE5C0eb22CbE12d6115c53#code) |  |
@@ -82,7 +83,8 @@ ETHERSCAN_API_KEY=<your_api_key> forge create --verify --verifier-url https://ap
 ```
 
 #### (Optional) Deploy on a Tenderly testnet
-forge create OmenAgentResultMapping \
+forge create AgentResultMapping \
+--constructor-args "Omen" \
 --private-key <private_key> \ 
 --rpc-url <tenderly_rpc_url>  \
 --etherscan-api-key <tenderly-access-token> \
