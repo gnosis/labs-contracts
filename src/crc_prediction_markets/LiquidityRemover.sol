@@ -82,7 +82,7 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard, BettingUtils {
         liquidityVaultToken.burnFrom(user, address(marketMaker), shares);
 
         // We transfer the LP tokens from LiquidityVault to this contract because they will
-        // get burned by MarketMaker (using msg.sender).
+        // get burned by MarketMaker (using msg.sender). This results in outcome tokens being sent to this address.
         IERC20(address(marketMaker)).transferFrom(address(liquidityVaultToken), address(this), shares);
         marketMaker.removeFunding(shares);
         IConditionalTokens conditionalTokens = IConditionalTokens(address(marketMaker.conditionalTokens()));
@@ -98,7 +98,8 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard, BettingUtils {
             betContracts[i] = BetContract(marketInfo.betContracts[i]);
         }
 
-        // For each condition and outcome, transfer the corresponding tokens
+        // For each condition and outcome, transfer the corresponding outcome tokens from this contract to the
+        // bet contracts.
         for (uint256 i = 0; i < conditionIds.length; i++) {
             for (uint256 j = 0; j < betContracts.length; j++) {
                 bytes32 conditionId = conditionIds[i];
@@ -134,12 +135,10 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard, BettingUtils {
         public
         virtual
         override
-        onlyHub(address(hub))
         returns (bytes4)
     {
         // Only process if the received token is our wrapped collateral token
-        // We only place bet if we received groupCRC tokens
-        if (groupCRCToken == address(uint160(id))) {
+        if (msg.sender == address(hub) && groupCRCToken == address(uint160(id))) {
             removeAllLiquidityFromUser(from);
         }
 

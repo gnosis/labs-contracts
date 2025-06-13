@@ -94,13 +94,11 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         public
         virtual
         override
-        onlyHub(address(hub))
         returns (bytes4)
     {
-        console.log("entered onERC1155Received LiquidityAdder");
         // Only process if the received token is our wrapped collateral token
         // We only place bet if we received groupCRC tokens
-        if (groupCRCToken == address(uint160(id))) {
+        if (msg.sender == address(hub) && groupCRCToken == address(uint160(id))) {
             addLiquidity(value, from);
         }
 

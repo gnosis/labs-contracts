@@ -14,7 +14,6 @@ import "../test/mocks/MockHubCRCPMs.sol";
 import "../test/mocks/MockConditionalTokens.sol";
 import "../test/mocks/MockERC20.sol";
 import "../test/helpers/FPMMTestHelper.sol";
-import {console} from "forge-std/console.sol";
 
 contract BetContractFactoryTest is FPMMTestHelper {
     BetContractFactory factory;
@@ -303,7 +302,7 @@ contract BetContractFactoryTest is FPMMTestHelper {
 
         LiquidityVaultToken liquidityVaultToken = LiquidityVaultToken(liquidityInfo.liquidityVaultToken);
         uint256 lpTokensBalance = liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
-        console.log("5", lpTokensBalance);
+
         assertTrue(lpTokensBalance == 0);
     }
 
@@ -369,7 +368,7 @@ contract BetContractFactoryTest is FPMMTestHelper {
         assertTrue(factory.fpmmAlreadyProcessed(address(mockFpmm)), "Second FPMM address should be tracked");
     }
 
-    function testSendERC1155ToBetContractFactoryWithoutBeingHub() public {
+    function testCRCRedemption() public {
         // Create bet contracts
         uint256[] memory outcomeIndexes = new uint256[](2);
         outcomeIndexes[0] = 0;
@@ -387,16 +386,22 @@ contract BetContractFactoryTest is FPMMTestHelper {
         );
         // verify liquidity info
         LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
-        LiquidityAdder liquidityAdder = LiquidityAdder(liquidityInfo.liquidityAdder);
+
+        address liquidityRemover = liquidityInfo.liquidityRemover;
 
         // mint CRC group tokens
         address alice = addresses[0];
         uint256 amount = 1 * CRC;
-        mintToGroup(group, alice, amount);
+
+        mintToGroup(groupTokenAddress, alice, amount);
 
         // send group CRC tokens to liquidityAdder
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(BettingUtils.NotHubError.selector, alice));
-        liquidityAdder.onERC1155Received(alice, address(liquidityAdder), uint256(uint160(group)), amount, "");
+
+        // first we add some lp shares
+        uint256 aliceBalanceOfAlice = hub.balanceOf(alice, uint256(uint160(alice)));
+        hub.safeTransferFrom(alice, liquidityRemover, uint256(uint160(alice)), amount, "");
+
+        assertTrue(lpTokensBalance == 0);
     }
 }

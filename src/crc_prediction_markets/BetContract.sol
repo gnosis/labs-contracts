@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "circles-v2/hub/Hub.sol";
-import "forge-std/console.sol";
 import "circles-v2/lift/IERC20Lift.sol";
 import "./utils/BettingUtils.sol";
 
@@ -60,8 +59,6 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         liquidityRemover = _liquidityRemover;
 
         erc20Group = hub.wrap(address(groupCRCToken), 0, CirclesType.Inflation);
-        console.log("erc20group");
-        console.logAddress(erc20Group);
 
         hub.registerOrganization(_organizationName, _organizationMetadataDigest);
         // This assures that this contract always receives group CRC tokens.
@@ -99,36 +96,26 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
     }
 
     function placeBet(uint256 investmentAmount, address better) public nonReentrant {
-        console.log("entered placeBet");
         require(better != address(0), "Invalid better address");
         require(investmentAmount > 0, "Investment amount must be > 0");
 
         uint256 amountToBet =
             defineAmountToBet(address(hub), erc20Group, address(groupCRCToken), investmentAmount, CirclesType.Inflation);
 
-        console.log("amountToBet", amountToBet);
-
         uint256 allowance = ERC20(erc20Group).allowance(address(this), address(fpmm));
-        console.log("allowance", allowance);
         if (allowance < amountToBet) {
             ERC20(erc20Group).approve(address(fpmm), amountToBet);
         }
         uint256 allowance2 = ERC20(erc20Group).allowance(address(this), address(fpmm));
-        console.log("after allowance", allowance2);
-        console.logAddress(erc20Group);
+
         uint256 expectedShares = fpmm.calcBuyAmount(amountToBet, outcomeIndex);
-        console.log("expectedShares", expectedShares);
-        console.log("min shares", expectedShares * 99 / 100);
-        console.log("outcome index", outcomeIndex);
         uint256 balance = ERC20(erc20Group).balanceOf(address(this));
-        console.log("balance of bet contract", balance);
         fpmm.buy(amountToBet, outcomeIndex, expectedShares * 99 / 100);
-        console.log("after buy");
+
         // update balances
         updateBalance(better, expectedShares);
         //update supply
         _totalSupply += expectedShares;
-        console.log("totalsupply", _totalSupply);
 
         emit BetPlaced(better, investmentAmount, expectedShares);
     }
@@ -143,27 +130,10 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         IConditionalTokens conditionalTokens = IConditionalTokens(address(fpmm.conditionalTokens()));
         // this will revert if market not resolved yet
         conditionalTokens.redeemPositions(IERC20(erc20Group), bytes32(0), conditionId, indexSets);
-
         buildClaimable();
     }
 
-    function clearBalanceAndTotalSupply() internal {
-        _totalSupply = 0;
-
-        // Remove all elements one by one (see https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableMap-clear-struct-EnumerableMap-AddressToBytes32Map-)
-        uint256 length = _balances.length();
-
-        for (uint256 i = 0; i < length; i++) {
-            // Since we're removing elements, we always look at index 0
-            (address key,) = _balances.at(0);
-            _balances.remove(key);
-        }
-    }
-
-    function buildClaimable() public nonReentrant {
-        /**
-         * Anyone can call this to calculate the shars of each user. This can (but need not be) called multiple times, once is sufficient to distribute earnings.
-         */
+    function buildClaimable() private nonReentrant {
         address[] memory addresses = getAddressesWithBalanceGreaterThan0();
 
         IERC20 erc20GroupToken = IERC20(erc20Group);
@@ -176,6 +146,17 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         }
 
         clearBalanceAndTotalSupply();
+    }
+
+    function clearBalanceAndTotalSupply() internal {
+        _totalSupply = 0;
+
+        uint256 length = _balances.length();
+
+        for (uint256 i = 0; i < length; i++) {
+            (address key,) = _balances.at(0);
+            _balances.remove(key);
+        }
     }
 
     function claimMany(address[] calldata users) external nonReentrant {
@@ -200,20 +181,15 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         returns (bytes4)
     {
         // We only place bet if we received groupCRC tokens
-        console.log("entered onERC1155Received BetContract", id);
-        console.logAddress(groupCRCToken);
-        if (msg.sender != address(hub)) {
-            // do nothing
-            return super.onERC1155Received(operator, from, id, value, data);
-        } else if (groupCRCToken == address(uint160(id))) {
-            console.log("placing bet");
-            placeBet(value, from);
-        }
-        // If it's an outcome token from LiquidityRemover
-        else if (from == address(liquidityRemover)) {
-            (address user, uint256 shares) = abi.decode(data, (address, uint256));
-            // Update the user's balance with their share of the outcome tokens
-            updateBalance(user, shares);
+
+        if (msg.sender == address(hub)) {
+            if (groupCRCToken == address(uint160(id))) {
+                placeBet(value, from);
+            } else if (from == address(liquidityRemover)) {
+                (address user, uint256 shares) = abi.decode(data, (address, uint256));
+                // Update the user's balance with their share of the outcome tokens
+                updateBalance(user, shares);
+            }
         }
 
         return super.onERC1155Received(operator, from, id, value, data);
