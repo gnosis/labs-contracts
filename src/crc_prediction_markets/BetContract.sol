@@ -194,4 +194,18 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
 
         return super.onERC1155Received(operator, from, id, value, data);
     }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] memory ids,
+        uint256[] memory values,
+        bytes memory data
+    ) public virtual override returns (bytes4) {
+        // loop through ids and values and call onERC1155Received
+        for (uint256 i = 0; i < ids.length; i++) {
+            onERC1155Received(operator, from, ids[i], values[i], data);
+        }
+        return super.onERC1155BatchReceived(operator, from, ids, values, data);
+    }
 }

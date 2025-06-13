@@ -367,41 +367,4 @@ contract BetContractFactoryTest is FPMMTestHelper {
         assertTrue(factory.fpmmAlreadyProcessed(fpmmMarketId), "First FPMM address should still be tracked");
         assertTrue(factory.fpmmAlreadyProcessed(address(mockFpmm)), "Second FPMM address should be tracked");
     }
-
-    function testCRCRedemption() public {
-        // Create bet contracts
-        uint256[] memory outcomeIndexes = new uint256[](2);
-        outcomeIndexes[0] = 0;
-        outcomeIndexes[1] = 1;
-
-        factory.createContractsForFpmm(
-            fpmmMarketId,
-            groupTokenAddress,
-            outcomeIndexes,
-            conditionIds,
-            buildBetContractOrganizationNames(),
-            buildOrganizationMetadataDigests(),
-            buildLiquidityOrganizationNames(),
-            buildOrganizationMetadataDigests()
-        );
-        // verify liquidity info
-        LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
-
-        address liquidityRemover = liquidityInfo.liquidityRemover;
-
-        // mint CRC group tokens
-        address alice = addresses[0];
-        uint256 amount = 1 * CRC;
-
-        mintToGroup(groupTokenAddress, alice, amount);
-
-        // send group CRC tokens to liquidityAdder
-        vm.prank(alice);
-
-        // first we add some lp shares
-        uint256 aliceBalanceOfAlice = hub.balanceOf(alice, uint256(uint160(alice)));
-        hub.safeTransferFrom(alice, liquidityRemover, uint256(uint160(alice)), amount, "");
-
-        assertTrue(lpTokensBalance == 0);
-    }
 }

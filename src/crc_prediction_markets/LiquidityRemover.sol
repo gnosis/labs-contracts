@@ -140,8 +140,23 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard, BettingUtils {
         // Only process if the received token is our wrapped collateral token
         if (msg.sender == address(hub) && groupCRCToken == address(uint160(id))) {
             removeAllLiquidityFromUser(from);
+            // We return the CRC tokens to the user since it was just used for triggering the action
+            hub.safeTransferFrom(address(this), from, id, value, "");
         }
 
         return super.onERC1155Received(operator, from, id, value, data);
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] memory ids,
+        uint256[] memory values,
+        bytes memory data
+    ) public virtual override returns (bytes4) {
+        for (uint256 i = 0; i < ids.length; i++) {
+            onERC1155Received(operator, from, ids[i], values[i], data);
+        }
+        return super.onERC1155BatchReceived(operator, from, ids, values, data);
     }
 }

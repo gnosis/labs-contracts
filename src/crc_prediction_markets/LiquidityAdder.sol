@@ -104,4 +104,18 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
 
         return super.onERC1155Received(operator, from, id, value, data);
     }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] memory ids,
+        uint256[] memory values,
+        bytes memory data
+    ) public virtual override returns (bytes4) {
+        // Process each token in the batch individually leveraging the single-transfer logic
+        for (uint256 i = 0; i < ids.length; i++) {
+            onERC1155Received(operator, from, ids[i], values[i], data);
+        }
+        return super.onERC1155BatchReceived(operator, from, ids, values, data);
+    }
 }
