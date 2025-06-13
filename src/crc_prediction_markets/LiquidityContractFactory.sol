@@ -5,7 +5,6 @@ import "./LiquidityRemover.sol";
 import "./LiquidityAdder.sol";
 import "./IFixedProductMarketMaker.sol";
 import "./LiquidityVaultToken.sol";
-import {console} from "forge-std/console.sol";
 
 contract LiquidityContractFactory {
     function createLiquidityContracts(
@@ -14,11 +13,22 @@ contract LiquidityContractFactory {
         address groupCRCToken,
         address fpmmAddress,
         address betContractFactory,
-        bytes32[] memory conditionIds
+        bytes32[] memory conditionIds,
+        string[] memory liquidityOrganizationNames,
+        bytes32[] memory liquidityOrganizationMetadataDigests
     ) public returns (address, address) {
-        console.log("entered createLiquidityContracts");
         address collateralTokenAddress = address(IFixedProductMarketMaker(fpmmAddress).collateralToken());
-        console.log("createLiquidityContracts, after collateralToken()");
+
+        LiquidityAdder liquidityAdder = new LiquidityAdder(
+            fpmmAddress,
+            hubAddress,
+            collateralTokenAddress,
+            groupCRCToken,
+            liquidityVaultTokenAddress,
+            conditionIds.length,
+            liquidityOrganizationNames[0],
+            liquidityOrganizationMetadataDigests[0]
+        );
 
         LiquidityRemover liquidityRemover = new LiquidityRemover(
             fpmmAddress,
@@ -27,19 +37,11 @@ contract LiquidityContractFactory {
             collateralTokenAddress,
             liquidityVaultTokenAddress,
             betContractFactory,
-            conditionIds
+            conditionIds,
+            liquidityOrganizationNames[1],
+            liquidityOrganizationMetadataDigests[1]
         );
-        console.log("createLiquidityContracts, after LiquidityRemover");
 
-        LiquidityAdder liquidityAdder = new LiquidityAdder(
-            fpmmAddress,
-            hubAddress,
-            collateralTokenAddress,
-            groupCRCToken,
-            liquidityVaultTokenAddress,
-            conditionIds.length
-        );
-        console.log("createLiquidityContracts, after LiquidityAdder");
         return (address(liquidityRemover), address(liquidityAdder));
     }
 }

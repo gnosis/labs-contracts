@@ -119,8 +119,10 @@ contract BetContractFactory is Ownable, Pausable {
         address groupCRCToken,
         uint256[] memory outcomeIndexes,
         bytes32[] memory conditionIds,
-        string[] memory organizationNames,
-        bytes32[] memory organizationMetadataDigests
+        string[] memory betContractsOrganizationNames,
+        bytes32[] memory betContractsOrganizationMetadataDigests,
+        string[] memory liquidityOrganizationNames,
+        bytes32[] memory liquidityOrganizationMetadataDigests
     ) external whenNotPaused {
         require(fpmmAddress != address(0), "Invalid FPMM address");
         require(groupCRCToken != address(0), "Invalid group CRC token address");
@@ -128,7 +130,14 @@ contract BetContractFactory is Ownable, Pausable {
         // Create market if it doesn't exist
         if (!fpmmAddresses.contains(fpmmAddress)) {
             (address liquidityRemover, address liquidityAdder) = liquidityContractFactory.createLiquidityContracts(
-                hubAddress, address(liquidityVaultToken), groupCRCToken, fpmmAddress, address(this), conditionIds
+                hubAddress,
+                address(liquidityVaultToken),
+                groupCRCToken,
+                fpmmAddress,
+                address(this),
+                conditionIds,
+                liquidityOrganizationNames,
+                liquidityOrganizationMetadataDigests
             );
             addRolesAndHandleApprovals(fpmmAddress, liquidityAdder, liquidityRemover);
 
@@ -140,8 +149,8 @@ contract BetContractFactory is Ownable, Pausable {
                     groupCRCToken,
                     outcomeIndexes[outcomeIdx],
                     betContractIdentifier,
-                    organizationNames[outcomeIdx],
-                    organizationMetadataDigests[outcomeIdx],
+                    betContractsOrganizationNames[outcomeIdx],
+                    betContractsOrganizationMetadataDigests[outcomeIdx],
                     address(liquidityRemover)
                 );
                 betContracts[outcomeIdx] = betContractAddr;

@@ -50,7 +50,9 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard, BettingUtils {
         address _collateralToken,
         address _liquidityVaultToken,
         address _betContractFactory,
-        bytes32[] memory _conditionIds
+        bytes32[] memory _conditionIds,
+        string memory _organizationName,
+        bytes32 _organizationMetadataDigest
     ) {
         require(_marketMaker != address(0), "Invalid FPMM");
         require(_hubAddress != address(0), "Invalid hub address");
@@ -68,6 +70,10 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard, BettingUtils {
 
         // Wrap the collateral token for ERC1155 support
         wrappedCollateralToken = hub.wrap(groupCRCToken, 0, CirclesType.Inflation);
+
+        hub.registerOrganization(_organizationName, _organizationMetadataDigest);
+        // This assures that this contract always receives group CRC tokens.
+        hub.trust(_groupCRCToken, type(uint96).max);
     }
 
     function removeAllLiquidityFromUser(address user) private nonReentrant {

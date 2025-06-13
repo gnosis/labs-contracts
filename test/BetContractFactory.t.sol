@@ -70,7 +70,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
             groupTokenAddress,
             outcomeIndexes,
             conditionIds,
-            buildOrganizationNames(),
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
             buildOrganizationMetadataDigests()
         );
 
@@ -90,7 +92,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
             groupTokenAddress,
             outcomeIndexes,
             conditionIds,
-            buildOrganizationNames(),
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
             buildOrganizationMetadataDigests()
         );
     }
@@ -105,7 +109,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
             groupTokenAddress,
             outcomeIndexes,
             conditionIds,
-            buildOrganizationNames(),
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
             buildOrganizationMetadataDigests()
         );
 
@@ -121,16 +127,30 @@ contract BetContractFactoryTest is FPMMTestHelper {
         vm.expectRevert("Invalid FPMM address");
         uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
         bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
-        string[] memory organizationNames = buildOrganizationNames();
+        string[] memory organizationNames = buildBetContractOrganizationNames();
         factory.createContractsForFpmm(
-            address(0), groupTokenAddress, outcomeIndexes, conditionIds, organizationNames, organizationMetadataDigests
+            address(0),
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            organizationNames,
+            organizationMetadataDigests,
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
 
         // Test with zero group CRC token address
         vm.expectRevert("Invalid group CRC token address");
 
         factory.createContractsForFpmm(
-            fpmmMarketId, address(0), outcomeIndexes, conditionIds, organizationNames, organizationMetadataDigests
+            fpmmMarketId,
+            address(0),
+            outcomeIndexes,
+            conditionIds,
+            organizationNames,
+            organizationMetadataDigests,
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
     }
 
@@ -145,7 +165,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
             groupTokenAddress,
             outcomeIndexes,
             conditionIds,
-            buildOrganizationNames(),
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
             buildOrganizationMetadataDigests()
         );
 
@@ -180,7 +202,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
             groupTokenAddress,
             outcomeIndexes,
             conditionIds,
-            buildOrganizationNames(),
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
             buildOrganizationMetadataDigests()
         );
         // verify liquidity info
@@ -228,7 +252,14 @@ contract BetContractFactoryTest is FPMMTestHelper {
         // Should revert with EnforcedPause error when trying to create contracts
         vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
         factory.createContractsForFpmm(
-            fpmmMarketId, groupTokenAddress, outcomeIndexes, _conditionIds, orgNames, orgMetadata
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            _conditionIds,
+            orgNames,
+            orgMetadata,
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
     }
 
@@ -243,7 +274,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
             groupTokenAddress,
             outcomeIndexes,
             conditionIds,
-            buildOrganizationNames(),
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
             buildOrganizationMetadataDigests()
         );
         // verify liquidity info
@@ -274,10 +307,17 @@ contract BetContractFactoryTest is FPMMTestHelper {
         assertTrue(lpTokensBalance == 0);
     }
 
-    function buildOrganizationNames() private pure returns (string[] memory) {
+    function buildBetContractOrganizationNames() private pure returns (string[] memory) {
         string[] memory organizationNames = new string[](2);
         organizationNames[0] = "Organization 1";
         organizationNames[1] = "Organization 2";
+        return organizationNames;
+    }
+
+    function buildLiquidityOrganizationNames() private pure returns (string[] memory) {
+        string[] memory organizationNames = new string[](2);
+        organizationNames[0] = "LiquidityAdder";
+        organizationNames[1] = "LiquidityRemover";
         return organizationNames;
     }
 
@@ -292,14 +332,16 @@ contract BetContractFactoryTest is FPMMTestHelper {
         // Create bet contracts
         uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
         bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
-        string[] memory organizationNames = buildOrganizationNames();
+        string[] memory organizationNames = buildBetContractOrganizationNames();
         factory.createContractsForFpmm(
             fpmmMarketId,
             groupTokenAddress,
             outcomeIndexes,
             conditionIds,
             organizationNames,
-            organizationMetadataDigests
+            organizationMetadataDigests,
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
 
         // Verify FPMM address is tracked
@@ -318,7 +360,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
             outcomeIndexes,
             conditionIds,
             organizationNames,
-            organizationMetadataDigests
+            organizationMetadataDigests,
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
         // Verify both FPMM addresses are tracked
         assertTrue(factory.fpmmAlreadyProcessed(fpmmMarketId), "First FPMM address should still be tracked");
@@ -336,7 +380,9 @@ contract BetContractFactoryTest is FPMMTestHelper {
             groupTokenAddress,
             outcomeIndexes,
             conditionIds,
-            buildOrganizationNames(),
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
             buildOrganizationMetadataDigests()
         );
         // verify liquidity info

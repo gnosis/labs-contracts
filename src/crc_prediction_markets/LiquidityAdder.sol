@@ -39,7 +39,9 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         address _collateralToken,
         address _groupCRCToken,
         address _liquidityVaultToken,
-        uint256 _slotCount
+        uint256 _slotCount,
+        string memory _organizationName,
+        bytes32 _organizationMetadataDigest
     ) {
         marketMakerAddress = _marketMaker;
         collateralTokenAddress = _collateralToken;
@@ -47,6 +49,10 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         groupCRCToken = _groupCRCToken;
         liquidityVaultToken = LiquidityVaultToken(_liquidityVaultToken);
         slotCount = _slotCount;
+
+        hub.registerOrganization(_organizationName, _organizationMetadataDigest);
+        // This assures that this contract always receives group CRC tokens.
+        hub.trust(_groupCRCToken, type(uint96).max);
     }
 
     function _ensureApproval(uint256 amount) private {
@@ -61,7 +67,7 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         uint256 amountToBet = BettingUtils.defineAmountToBet(
             address(hub), collateralTokenAddress, groupCRCToken, amount, CirclesType.Inflation
         );
-        uint256[] memory distributionHint = new uint256[](slotCount);
+        uint256[] memory distributionHint = new uint256[](0);
 
         _ensureApproval(amountToBet);
 
@@ -69,6 +75,9 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         // We transfer the LP tokens to the liquidity vault token contract for safekeeping
         IERC20 marketMakerTokenAsToken = IERC20(marketMakerAddress);
         uint256 prevBalance = marketMakerTokenAsToken.balanceOf(address(this));
+        console.log("prevBalance", prevBalance);
+        console.log("distri hint length", distributionHint.length);
+        console.logAddress(marketMakerAddress);
         IFixedProductMarketMaker(marketMakerAddress).addFunding(amountToBet, distributionHint);
         uint256 postBalance = marketMakerTokenAsToken.balanceOf(address(this));
         marketMakerTokenAsToken.transfer(address(liquidityVaultToken), postBalance - prevBalance);
@@ -88,6 +97,7 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         onlyHub(address(hub))
         returns (bytes4)
     {
+        console.log("entered onERC1155Received LiquidityAdder");
         // Only process if the received token is our wrapped collateral token
         // We only place bet if we received groupCRC tokens
         if (groupCRCToken == address(uint160(id))) {

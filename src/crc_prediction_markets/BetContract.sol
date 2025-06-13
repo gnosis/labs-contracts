@@ -60,6 +60,8 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         liquidityRemover = _liquidityRemover;
 
         erc20Group = hub.wrap(address(groupCRCToken), 0, CirclesType.Inflation);
+        console.log("erc20group");
+        console.logAddress(erc20Group);
 
         hub.registerOrganization(_organizationName, _organizationMetadataDigest);
         // This assures that this contract always receives group CRC tokens.
@@ -97,27 +99,36 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
     }
 
     function placeBet(uint256 investmentAmount, address better) public nonReentrant {
+        console.log("entered placeBet");
         require(better != address(0), "Invalid better address");
         require(investmentAmount > 0, "Investment amount must be > 0");
 
         uint256 amountToBet =
             defineAmountToBet(address(hub), erc20Group, address(groupCRCToken), investmentAmount, CirclesType.Inflation);
 
-        // authorize groupCRC
+        console.log("amountToBet", amountToBet);
 
         uint256 allowance = ERC20(erc20Group).allowance(address(this), address(fpmm));
+        console.log("allowance", allowance);
         if (allowance < amountToBet) {
             ERC20(erc20Group).approve(address(fpmm), amountToBet);
         }
-
+        uint256 allowance2 = ERC20(erc20Group).allowance(address(this), address(fpmm));
+        console.log("after allowance", allowance2);
+        console.logAddress(erc20Group);
         uint256 expectedShares = fpmm.calcBuyAmount(amountToBet, outcomeIndex);
-
+        console.log("expectedShares", expectedShares);
+        console.log("min shares", expectedShares * 99 / 100);
+        console.log("outcome index", outcomeIndex);
+        uint256 balance = ERC20(erc20Group).balanceOf(address(this));
+        console.log("balance of bet contract", balance);
         fpmm.buy(amountToBet, outcomeIndex, expectedShares * 99 / 100);
-
+        console.log("after buy");
         // update balances
         updateBalance(better, expectedShares);
         //update supply
         _totalSupply += expectedShares;
+        console.log("totalsupply", _totalSupply);
 
         emit BetPlaced(better, investmentAmount, expectedShares);
     }
@@ -186,11 +197,16 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         public
         virtual
         override
-        onlyHub(address(hub))
         returns (bytes4)
     {
         // We only place bet if we received groupCRC tokens
-        if (groupCRCToken == address(uint160(id))) {
+        console.log("entered onERC1155Received BetContract", id);
+        console.logAddress(groupCRCToken);
+        if (msg.sender != address(hub)) {
+            // do nothing
+            return super.onERC1155Received(operator, from, id, value, data);
+        } else if (groupCRCToken == address(uint160(id))) {
+            console.log("placing bet");
             placeBet(value, from);
         }
         // If it's an outcome token from LiquidityRemover
