@@ -11,7 +11,7 @@ import "../../src/crc_prediction_markets/BetContract.sol";
 contract FPMMTestHelper is Test, GroupSetup, IHubErrors {
     // Constants
     uint256 public constant OUTCOME_SLOT_COUNT = 2;
-    uint256 public constant CONDITION_ID = 1;
+    bytes32 public constant CONDITION_ID = 0xcf8d088c254553d8845eb3cc7541b8735e90d256541bed735cd8e4a14668f036;
     uint256 public constant MOCK_OUTCOME_INDEX = 0;
 
     // Public state variables for test contracts to access

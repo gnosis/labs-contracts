@@ -14,6 +14,7 @@ import "../test/mocks/MockHubCRCPMs.sol";
 import "../test/mocks/MockConditionalTokens.sol";
 import "../test/mocks/MockERC20.sol";
 import "../test/helpers/FPMMTestHelper.sol";
+import "forge-std/console.sol";
 
 contract BetContractFactoryTest is FPMMTestHelper {
     BetContractFactory factory;
@@ -44,7 +45,7 @@ contract BetContractFactoryTest is FPMMTestHelper {
 
     function buildMockConditionIds() private pure returns (bytes32[] memory) {
         bytes32[] memory _conditionIds = new bytes32[](1);
-        _conditionIds[0] = bytes32(0);
+        _conditionIds[0] = CONDITION_ID;
         return _conditionIds;
     }
 
@@ -280,6 +281,8 @@ contract BetContractFactoryTest is FPMMTestHelper {
         );
         // verify liquidity info
         LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
+        MarketInfo memory marketInfo = factory.getMarketInfo(fpmmMarketId);
+
         address liquidityAdder = liquidityInfo.liquidityAdder;
         address liquidityRemover = liquidityInfo.liquidityRemover;
 
@@ -302,8 +305,18 @@ contract BetContractFactoryTest is FPMMTestHelper {
 
         LiquidityVaultToken liquidityVaultToken = LiquidityVaultToken(liquidityInfo.liquidityVaultToken);
         uint256 lpTokensBalance = liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
-
         assertTrue(lpTokensBalance == 0);
+        console.log("after lptokens balance");
+
+        // Assert that outcome tokens were sent to BetContracts
+        MockFixedProductMarketMaker fpmmMarket = MockFixedProductMarketMaker(fpmmMarketId);
+        MockConditionalTokens conditionalTokens = MockConditionalTokens(address(fpmmMarket.conditionalTokens()));
+        uint256[] memory tokenIds = fpmmMarket.getTokenIds(address(fpmmMarket.collateralToken()));
+        for (uint256 index = 0; index < tokenIds.length; index++) {
+            BetContract betContract = BetContract(marketInfo.betContracts[index]);
+            uint256 balance = conditionalTokens.balanceOf(address(betContract), tokenIds[index]);
+            assertTrue(balance > 0, "Outcome tokens should be sent to BetContracts");
+        }
     }
 
     function buildBetContractOrganizationNames() private pure returns (string[] memory) {

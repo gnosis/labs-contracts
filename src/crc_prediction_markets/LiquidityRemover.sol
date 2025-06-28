@@ -100,32 +100,30 @@ contract LiquidityRemover is ERC1155Holder, ReentrancyGuard, BettingUtils {
 
         // For each condition and outcome, transfer the corresponding outcome tokens from this contract to the
         // bet contracts.
+        IERC20 collateralTokenAsERC20 = IERC20(marketMaker.collateralToken());
         for (uint256 i = 0; i < conditionIds.length; i++) {
             for (uint256 j = 0; j < betContracts.length; j++) {
                 bytes32 conditionId = conditionIds[i];
-                bytes32 collectionId = CTHelpers.getCollectionId(
-                    bytes32(0), conditionId, CTHelpers.getPositionId(IERC20(marketMaker.collateralToken()), bytes32(0))
-                );
-
                 // j+1 denotes the index set (starts at 1)
-                uint256 positionId = CTHelpers.getPositionId(
-                    IERC20(marketMaker.collateralToken()), CTHelpers.getCollectionId(collectionId, conditionId, j + 1)
-                );
+                bytes32 collectionId = CTHelpers.getCollectionId(bytes32(0), conditionId, j + 1);
+                uint256 positionId = CTHelpers.getPositionId(collateralTokenAsERC20, collectionId);
 
                 uint256 balance = conditionalTokens.balanceOf(address(this), positionId);
                 if (balance > 0) {
                     bytes memory data = abi.encode(user, shares);
+                    // We could also sell the outcome tokens, however a binary search collateral <> outcome tokens
+                    // would be needed (see `fpmm.sell`), hence we simplify the approach and send it all to the BetContracts.
                     conditionalTokens.safeTransferFrom(
-                        address(this), address(betContracts[i]), positionId, balance, data
+                        address(this), address(betContracts[j]), positionId, balance, data
                     );
                 }
             }
         }
 
         // Ensures any remaining collateral is sent to the user
-        uint256 collateralBalance = IERC20(marketMaker.collateralToken()).balanceOf(address(this));
+        uint256 collateralBalance = collateralTokenAsERC20.balanceOf(address(this));
         if (collateralBalance > 0) {
-            IERC20(marketMaker.collateralToken()).transfer(user, collateralBalance);
+            collateralTokenAsERC20.transfer(user, collateralBalance);
         }
 
         emit LiquidityRemoved(user, collateralBalance, shares);

@@ -99,19 +99,13 @@ contract BetContractFactory is Ownable, Pausable {
         private
     {
         liquidityVaultToken.addUpdater(address(this), fpmmAddress);
-        console.log("addRolesAndHandleApprovals");
         liquidityVaultToken.addUpdater(address(liquidityContractFactory), fpmmAddress);
-        console.log("addRolesAndHandleApprovals 1");
         liquidityVaultToken.addUpdater(address(liquidityAdder), fpmmAddress);
-        console.log("addRolesAndHandleApprovals 2");
         liquidityVaultToken.addUpdater(address(liquidityRemover), fpmmAddress);
-        console.log("addRolesAndHandleApprovals 3");
         address[] memory spenders = new address[](2);
         spenders[0] = address(liquidityAdder);
         spenders[1] = address(liquidityRemover);
-        console.log("addRolesAndHandleApprovals 4");
         liquidityVaultToken.approveMarketMakerLPTokensSpend(fpmmAddress, spenders);
-        console.log("addRolesAndHandleApprovals 5");
     }
 
     function createContractsForFpmm(

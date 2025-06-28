@@ -6,7 +6,7 @@ import "circles-v2/circles/ERC1155.sol";
 import "circles-v2-test/groups/groupSetup.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./MockConditionalTokens.sol";
-import "forge-std/console.sol";
+import "../../src/crc_prediction_markets/CTHelpers.sol";
 
 contract MockFixedProductMarketMaker is ERC20 {
     event FPMMBuy(
@@ -19,12 +19,12 @@ contract MockFixedProductMarketMaker is ERC20 {
 
     address public collateralToken;
     uint256 public outcomeSlotCount;
-    uint256 public conditionId;
+    bytes32 public conditionId;
     MockConditionalTokens public conditionalTokens;
     mapping(uint256 => uint256) public outcomePrices;
     mapping(address => uint256) public feesWithdrawable;
 
-    constructor(address _collateralToken, uint256 _outcomeSlotCount, uint256 _conditionId) ERC20("MockFPMM", "MFPMM") {
+    constructor(address _collateralToken, uint256 _outcomeSlotCount, bytes32 _conditionId) ERC20("MockFPMM", "MFPMM") {
         collateralToken = _collateralToken;
         outcomeSlotCount = _outcomeSlotCount;
         conditionId = _conditionId;
@@ -73,6 +73,25 @@ contract MockFixedProductMarketMaker is ERC20 {
 
     function removeFunding(uint256 sharesToBurn) external {
         _burn(msg.sender, sharesToBurn);
-        // outcome tokens are also in reality transferred back to users (not done in this mock)
+        // transfer outcome tokens
+        uint256[] memory tokenIds = getTokenIds(collateralToken);
+        for (uint256 index = 0; index < tokenIds.length; index++) {
+            conditionalTokens.mint(address(this), tokenIds[index], sharesToBurn);
+            // in reality, this should be `safeBatchTransferFrom`, but here we mock it as so.
+            conditionalTokens.safeTransferFrom(address(this), msg.sender, tokenIds[index], sharesToBurn, "");
+        }
+    }
+
+    // Convenience function
+    function getTokenIds(address collateralTokenAddress) public view returns (uint256[] memory) {
+        IERC20 collateralTokenAsERC20 = IERC20(collateralTokenAddress);
+        uint256[] memory tokenIds = new uint256[](2);
+        for (uint256 j = 0; j < 2; j++) {
+            bytes32 collectionId = CTHelpers.getCollectionId(bytes32(0), conditionId, j + 1);
+            uint256 positionId = CTHelpers.getPositionId(collateralTokenAsERC20, collectionId);
+            tokenIds[j] = positionId;
+        }
+
+        return tokenIds;
     }
 }

@@ -106,10 +106,8 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         if (allowance < amountToBet) {
             ERC20(erc20Group).approve(address(fpmm), amountToBet);
         }
-        uint256 allowance2 = ERC20(erc20Group).allowance(address(this), address(fpmm));
 
         uint256 expectedShares = fpmm.calcBuyAmount(amountToBet, outcomeIndex);
-        uint256 balance = ERC20(erc20Group).balanceOf(address(this));
         fpmm.buy(amountToBet, outcomeIndex, expectedShares * 99 / 100);
 
         // update balances
