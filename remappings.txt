@@ -1,3 +1,6 @@
 forge-std/=lib/forge-std/src/
 circles-v2/=lib/circles-contracts-v2/src/
 circles-v2-test/=lib/circles-contracts-v2/test/
+safe-tools/=lib/safe-tools/src/
+safe-contracts/=lib/safe-smart-account/contracts/
+solady/=lib/solady/src/

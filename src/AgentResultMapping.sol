@@ -3,28 +3,42 @@ pragma solidity ^0.8.24;
 
 import {Prediction} from "./structs.sol";
 
-contract OmenAgentResultMapping {
+contract AgentResultMapping {
     event PredictionAdded(
         address indexed marketAddress,
-        uint16 estimatedProbabilityBps,
         address indexed publisherAddress,
+        string[] outcomes,
+        uint16[] estimatedProbabilitiesBps,
         bytes32[] txHashes,
         bytes32 ipfsHash
     );
 
+    string public marketPlatformName;
+
     mapping(address => Prediction[]) private marketPredictions;
 
-    constructor() {}
+    constructor(string memory _marketPlatformName) {
+        marketPlatformName = _marketPlatformName;
+    }
 
     function getPredictions(address marketAddress) public view returns (Prediction[] memory) {
         return marketPredictions[marketAddress];
     }
 
     function addPrediction(address marketAddress, Prediction memory prediction) public {
-        require(address(msg.sender) == address(prediction.publisherAddress), "Only publisher can add a prediction");
+        require(msg.sender == prediction.publisherAddress, "Only publisher can add a prediction");
+        require(
+            prediction.outcomes.length == prediction.estimatedProbabilitiesBps.length,
+            "Outcome/probability length mismatch"
+        );
         marketPredictions[marketAddress].push(prediction);
         emit PredictionAdded(
-            marketAddress, prediction.estimatedProbabilityBps, msg.sender, prediction.txHashes, prediction.ipfsHash
+            marketAddress,
+            prediction.publisherAddress,
+            prediction.outcomes,
+            prediction.estimatedProbabilitiesBps,
+            prediction.txHashes,
+            prediction.ipfsHash
         );
     }
 

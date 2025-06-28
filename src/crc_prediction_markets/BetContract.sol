@@ -13,7 +13,9 @@ import "circles-v2/hub/Hub.sol";
 import "circles-v2/lift/IERC20Lift.sol";
 import "./utils/BettingUtils.sol";
 
-contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
+
+
+contract BetContract is ERC1155Holder, ReentrancyGuard {
     using EnumerableMap for EnumerableMap.AddressToUintMap;
 
     event BetPlaced(address indexed better, uint256 investmentAmount, uint256 expectedShares);
@@ -69,6 +71,7 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         string memory organizationId = string.concat(
             "Bet contract #", Strings.toString(betContractIdentifier), " - outcome ", Strings.toString(outcomeIndex)
         );
+        console.log("organizationId", organizationId);
         return organizationId;
     }
 
