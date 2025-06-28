@@ -16,6 +16,8 @@ Repository holding the contracts made by Gnosis Labs team.
 | NoSingleSignedTransactionGuard     | Safe Guard that only allows transactions with at least 2 signers. | [0x43eff50Dc1Db7c084d2488792C7df28C0c3558D5](https://gnosisscan.io/address/0x43eff50Dc1Db7c084d2488792C7df28C0c3558D5#code)   | none |
 | DebuggingContract     | Add whatever function you need here to test out | [0x5Aa82E068aE6a6a1C26c42E5a59520a74Cdb8998](https://gnosisscan.io/address/0x5Aa82E068aE6a6a1C26c42E5a59520a74Cdb8998#code)   | none |
 
+
+
 ## Set up contracts development
 
 The repository uses [Foundry](https://book.getfoundry.sh/).

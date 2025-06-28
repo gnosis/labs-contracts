@@ -15,7 +15,7 @@ contract AgentNFTTest is Test {
         agentNFT = new AgentNFT(maxSupply);
     }
 
-    function testOwnerIsDeployer() public {
+    function testOwnerIsDeployer() public view {
         assertEq(agentNFT.owner(), owner, "Owner should be deployer");
     }
 
