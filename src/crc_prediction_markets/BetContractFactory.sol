@@ -35,7 +35,6 @@ contract BetContractFactory is Ownable, Pausable {
     constructor(address _hubAddress, address _liquidityContractFactory) Ownable(msg.sender) {
         hubAddress = _hubAddress;
         liquidityVaultToken = new LiquidityVaultToken();
-        // todo - add role
         liquidityContractFactory = LiquidityContractFactory(_liquidityContractFactory);
     }
 
