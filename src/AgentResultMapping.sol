@@ -9,7 +9,7 @@ contract AgentResultMapping {
         address indexed publisherAddress,
         string[] outcomes,
         uint16[] estimatedProbabilitiesBps,
-        bytes32[] txHashes,
+        bytes[] txHashes,
         bytes32 ipfsHash
     );
 

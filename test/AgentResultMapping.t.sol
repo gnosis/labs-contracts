@@ -24,7 +24,8 @@ contract AgentResultMappingTest is Test {
     function buildPrediction(string memory input) internal view returns (Prediction memory) {
         // Convert the input string to a bytes32 IPFS hash
         bytes32 ipfsHash = keccak256(abi.encodePacked(input));
-        bytes32 dummyTxHash = keccak256(abi.encodePacked("dummy transaction hash"));
+        // Long hash example from CoW order
+        bytes memory dummyTxHash = hex"3214fee9de38017bedbbaecb5f8c12a16b173d6bc9c6d84e118b1fbf36a1d610";
 
         // Categorical outcomes: Yes/No
         string[] memory outcomes = new string[](2);
@@ -37,7 +38,7 @@ contract AgentResultMappingTest is Test {
         estimatedProbabilitiesBps[1] = 3444; // 34.44% for "No"
 
         // Transaction hashes
-        bytes32[] memory txHashes = new bytes32[](2);
+        bytes[] memory txHashes = new bytes[](2);
         txHashes[0] = dummyTxHash;
         txHashes[1] = dummyTxHash;
 
