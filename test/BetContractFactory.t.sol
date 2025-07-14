@@ -380,4 +380,52 @@ contract BetContractFactoryTest is FPMMTestHelper {
         assertTrue(factory.fpmmAlreadyProcessed(fpmmMarketId), "First FPMM address should still be tracked");
         assertTrue(factory.fpmmAlreadyProcessed(address(mockFpmm)), "Second FPMM address should be tracked");
     }
+
+    function testIssueLPTokenInconsistency() public {
+        // Create bet contracts
+        uint256[] memory outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = 0;
+        outcomeIndexes[1] = 1;
+
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
+        );
+        // verify liquidity info
+        LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
+        LiquidityAdder liquidityAdder = LiquidityAdder(liquidityInfo.liquidityAdder);
+
+        // mint CRC group tokens
+        address alice = addresses[0];
+        uint256 amount = 1 * CRC;
+        mintToGroup(group, alice, amount);
+
+        // Alice sends 1 group CRC tokens to liquidityAdder
+        vm.prank(alice);
+        hub.safeTransferFrom(alice, address(liquidityAdder), uint256(uint160(group)), amount, "");
+        vm.stopPrank();
+
+        address bob = addresses[1];
+        mintToGroup(group, bob, amount);
+        // Bob sends 1 group CRC tokens to liquidityAdder
+        vm.prank(bob);
+        hub.safeTransferFrom(bob, address(liquidityAdder), uint256(uint160(group)), amount, "");
+
+        LiquidityVaultToken liquidityVaultToken = LiquidityVaultToken(liquidityInfo.liquidityVaultToken);
+
+        uint256 lpTokensBalanceAlice =
+            liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
+        uint256 lpTokensBalanceBob = liquidityVaultToken.balanceOf(bob, liquidityVaultToken.parseAddress(fpmmMarketId));
+        console.log(
+            "lp Balance of Alice and Bob, after both deposited 1 CRC: ", lpTokensBalanceAlice, lpTokensBalanceBob
+        );
+        assertTrue(lpTokensBalanceAlice > 0);
+        assertTrue(lpTokensBalanceAlice == lpTokensBalanceBob);
+    }
 }

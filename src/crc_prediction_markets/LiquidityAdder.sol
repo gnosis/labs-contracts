@@ -75,19 +75,18 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         // We transfer the LP tokens to the liquidity vault token contract for safekeeping
         IERC20 marketMakerTokenAsToken = IERC20(marketMakerAddress);
         uint256 prevBalance = marketMakerTokenAsToken.balanceOf(address(this));
-        console.log("prevBalance", prevBalance);
-        console.log("distri hint length", distributionHint.length);
-        console.logAddress(marketMakerAddress);
+
         IFixedProductMarketMaker(marketMakerAddress).addFunding(amountToBet, distributionHint);
         uint256 postBalance = marketMakerTokenAsToken.balanceOf(address(this));
-        marketMakerTokenAsToken.transfer(address(liquidityVaultToken), postBalance - prevBalance);
+        uint256 newlyMintedShares = postBalance - prevBalance;
 
-        uint256 shares = IFixedProductMarketMaker(marketMakerAddress).balanceOf(address(liquidityVaultToken));
-        console.log("shares alice", shares);
-        liquidityVaultToken.mintTo(better, marketMakerAddress, shares, "");
+        // move the shares to the vault
+        marketMakerTokenAsToken.transfer(address(liquidityVaultToken), newlyMintedShares);
 
-        emit LiquidityAdded(better, amountToBet, shares);
-        return shares;
+        liquidityVaultToken.mintTo(better, marketMakerAddress, newlyMintedShares, "");
+
+        emit LiquidityAdded(better, amountToBet, newlyMintedShares);
+        return newlyMintedShares;
     }
 
     function onERC1155Received(address operator, address from, uint256 id, uint256 value, bytes memory data)
