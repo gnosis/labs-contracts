@@ -6,6 +6,7 @@ import {StdCheats} from "forge-std/StdCheats.sol";
 import "forge-std/console.sol";
 import "./helpers/FPMMTestHelper.sol";
 import "../src/crc_prediction_markets/BetContract.sol";
+import "forge-std/StdUtils.sol";
 
 contract BetContractTest is FPMMTestHelper {
     BetContract public betContract;
@@ -45,6 +46,16 @@ contract BetContractTest is FPMMTestHelper {
         uint256 bobG1 = hub.balanceOf(recipient, uint256(uint160(group)));
         assertEq(bobG1, 1 * CRC);
 
+        // Attempt to send an ERC1155 token with an ID different from the expected group CRC token.
+        // This should trigger `UnnaceptableTokenError` inside `BetContract.onERC1155Received`.
+        address unexpectedTokenOwner = addresses[3];
+        uint256 wrongTokenId = uint256(uint160(unexpectedTokenOwner)); // personal Circles token ID of `addresses[3]`
+
+        // Sending an unacceptable token should revert
+        vm.prank(unexpectedTokenOwner);
+        vm.expectRevert(); // Expect the call to revert inside BetContract
+        hub.safeTransferFrom(unexpectedTokenOwner, address(betContract), wrongTokenId, amount, "");
+
         // Send CRC to contract
         console.log("bet yes contract", address(betContract));
         vm.prank(recipient);
@@ -76,7 +87,6 @@ contract BetContractTest is FPMMTestHelper {
         address vault = address(treasury.vaults(group));
         assertTrue(vault != address(0));
         // assert that Vault holds Alice's 1 CRC;
-        // todo: total supply is not (yet) implemented in hub erc1155
         assertEq(hub.balanceOf(vault, uint256(uint160(addresses[0]))), 1 * CRC);
     }
 }

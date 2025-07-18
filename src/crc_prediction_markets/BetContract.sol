@@ -13,6 +13,9 @@ import "circles-v2/hub/Hub.sol";
 import "circles-v2/lift/IERC20Lift.sol";
 import "./utils/BettingUtils.sol";
 
+// Custom error thrown when receiving unacceptable token
+error UnnaceptableTokenError(address tokenAddress);
+
 contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
     using EnumerableMap for EnumerableMap.AddressToUintMap;
 
@@ -81,20 +84,6 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
         return exists ? balance : 0;
     }
 
-    function getAddressesWithBalanceGreaterThan0() public view returns (address[] memory) {
-        uint256 length = _balances.length();
-        address[] memory addresses = new address[](length);
-
-        for (uint256 i = 0; i < length; i++) {
-            (address addr, uint256 balance) = _balances.at(i);
-            if (balance > 0) {
-                addresses[i] = addr;
-            }
-        }
-
-        return addresses;
-    }
-
     function placeBet(uint256 investmentAmount, address better) public nonReentrant {
         require(better != address(0), "Invalid better address");
         require(investmentAmount > 0, "Investment amount must be > 0");
@@ -132,15 +121,16 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
     }
 
     function buildClaimable() private nonReentrant {
-        address[] memory addresses = getAddressesWithBalanceGreaterThan0();
-
         IERC20 erc20GroupToken = IERC20(erc20Group);
         uint256 totalCollateralToTransfer = erc20GroupToken.balanceOf(address(this));
 
-        for (uint256 i = 0; i < addresses.length; i++) {
-            address better = addresses[i];
-            uint256 share = (balanceOf(better) * totalCollateralToTransfer) / _totalSupply;
-            claimable[better] += share;
+        uint256 length = _balances.length();
+        for (uint256 i = 0; i < length; i++) {
+            (address better, uint256 balance) = _balances.at(i);
+            if (balance > 0) {
+                uint256 share = (balance * totalCollateralToTransfer) / _totalSupply;
+                claimable[better] += share;
+            }
         }
 
         clearBalanceAndTotalSupply();
@@ -189,6 +179,8 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
                 updateBalance(user, shares);
                 //update supply
                 _totalSupply += shares;
+            } else {
+                revert UnnaceptableTokenError({tokenAddress: address(uint160(id))});
             }
         }
 
