@@ -25,8 +25,6 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
 
     address public groupCRCToken;
 
-    uint256 public slotCount;
-
     // Responsible for managing balances externally
     LiquidityVaultToken public liquidityVaultToken;
 
@@ -39,7 +37,6 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         address _collateralToken,
         address _groupCRCToken,
         address _liquidityVaultToken,
-        uint256 _slotCount,
         string memory _organizationName,
         bytes32 _organizationMetadataDigest
     ) {
@@ -48,7 +45,6 @@ contract LiquidityAdder is ERC1155Holder, ReentrancyGuard, BettingUtils {
         hub = Hub(_hubAddress);
         groupCRCToken = _groupCRCToken;
         liquidityVaultToken = LiquidityVaultToken(_liquidityVaultToken);
-        slotCount = _slotCount;
 
         hub.registerOrganization(_organizationName, _organizationMetadataDigest);
         // This assures that this contract always receives group CRC tokens.

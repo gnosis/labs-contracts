@@ -25,7 +25,6 @@ contract LiquidityContractFactory {
             collateralTokenAddress,
             groupCRCToken,
             liquidityVaultTokenAddress,
-            conditionIds.length,
             liquidityOrganizationNames[0],
             liquidityOrganizationMetadataDigests[0]
         );

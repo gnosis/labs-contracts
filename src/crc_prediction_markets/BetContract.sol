@@ -33,7 +33,7 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
     EnumerableMap.AddressToUintMap private _balances;
     uint256 private _totalSupply;
     // organization ID for Circles registration
-    uint256 betContractIdentifier;
+    uint256 public betContractIdentifier;
 
     mapping(address => uint256) public claimable;
 
@@ -187,6 +187,8 @@ contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
                 (address user, uint256 shares) = abi.decode(data, (address, uint256));
                 // Update the user's balance with their share of the outcome tokens
                 updateBalance(user, shares);
+                //update supply
+                _totalSupply += shares;
             }
         }
 
