@@ -9,13 +9,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-
 import "circles-v2/hub/Hub.sol";
 import "circles-v2/lift/IERC20Lift.sol";
+import "./utils/BettingUtils.sol";
 
-import {console} from "forge-std/console.sol";
+// Custom error thrown when receiving unacceptable token
+error UnnaceptableTokenError(address tokenAddress);
 
-contract BetContract is ERC1155Holder, ReentrancyGuard {
+contract BetContract is ERC1155Holder, ReentrancyGuard, BettingUtils {
     using EnumerableMap for EnumerableMap.AddressToUintMap;
 
     event BetPlaced(address indexed better, uint256 investmentAmount, uint256 expectedShares);
@@ -29,11 +30,13 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
     address public groupCRCToken;
     address public erc20Group;
 
+    address public liquidityRemover;
+
     // outcome token balances
     EnumerableMap.AddressToUintMap private _balances;
     uint256 private _totalSupply;
     // organization ID for Circles registration
-    uint256 betContractIdentifier;
+    uint256 public betContractIdentifier;
 
     mapping(address => uint256) public claimable;
 
@@ -44,7 +47,8 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         address _hubAddress,
         uint256 _betContractIdentifier,
         string memory _organizationName,
-        bytes32 _organizationMetadataDigest
+        bytes32 _organizationMetadataDigest,
+        address _liquidityRemover
     ) {
         require(fpmmAddress != address(0), "Invalid FPMM address");
         require(_groupCRCToken != address(0), "Invalid group CRC token address");
@@ -55,6 +59,7 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         outcomeIndex = _outcomeIndex;
         hub = Hub(_hubAddress);
         betContractIdentifier = _betContractIdentifier;
+        liquidityRemover = _liquidityRemover;
 
         erc20Group = hub.wrap(address(groupCRCToken), 0, CirclesType.Inflation);
 
@@ -67,7 +72,6 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         string memory organizationId = string.concat(
             "Bet contract #", Strings.toString(betContractIdentifier), " - outcome ", Strings.toString(outcomeIndex)
         );
-        console.log("organizationId", organizationId);
         return organizationId;
     }
 
@@ -80,45 +84,19 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         return exists ? balance : 0;
     }
 
-    function getAddressesWithBalanceGreaterThan0() public view returns (address[] memory) {
-        uint256 length = _balances.length();
-        address[] memory addresses = new address[](length);
-
-        for (uint256 i = 0; i < length; i++) {
-            (address addr, uint256 balance) = _balances.at(i);
-            if (balance > 0) {
-                addresses[i] = addr;
-            }
-        }
-
-        return addresses;
-    }
-
     function placeBet(uint256 investmentAmount, address better) public nonReentrant {
         require(better != address(0), "Invalid better address");
         require(investmentAmount > 0, "Investment amount must be > 0");
 
-        uint256 balanceBeforeWrap = ERC20(erc20Group).balanceOf(address(this));
-
-        hub.wrap(address(groupCRCToken), investmentAmount, CirclesType.Inflation);
-
-        // the balance will be greater than investmentAmount because demurrage not applied to inflationary tokens
-        uint256 balanceAfterWrap = ERC20(erc20Group).balanceOf(address(this));
-
-        uint256 amountToBet = balanceAfterWrap - balanceBeforeWrap;
-        require(amountToBet > 0, "Wrap did not yield bettable tokens");
-
-        // authorize groupCRC
+        uint256 amountToBet =
+            defineAmountToBet(address(hub), erc20Group, address(groupCRCToken), investmentAmount, CirclesType.Inflation);
 
         uint256 allowance = ERC20(erc20Group).allowance(address(this), address(fpmm));
-
         if (allowance < amountToBet) {
             ERC20(erc20Group).approve(address(fpmm), amountToBet);
         }
 
         uint256 expectedShares = fpmm.calcBuyAmount(amountToBet, outcomeIndex);
-
-        // 1% slippage
         fpmm.buy(amountToBet, outcomeIndex, expectedShares * 99 / 100);
 
         // update balances
@@ -139,39 +117,34 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         IConditionalTokens conditionalTokens = IConditionalTokens(address(fpmm.conditionalTokens()));
         // this will revert if market not resolved yet
         conditionalTokens.redeemPositions(IERC20(erc20Group), bytes32(0), conditionId, indexSets);
-
         buildClaimable();
+    }
+
+    function buildClaimable() private nonReentrant {
+        IERC20 erc20GroupToken = IERC20(erc20Group);
+        uint256 totalCollateralToTransfer = erc20GroupToken.balanceOf(address(this));
+
+        uint256 length = _balances.length();
+        for (uint256 i = 0; i < length; i++) {
+            (address better, uint256 balance) = _balances.at(i);
+            if (balance > 0) {
+                uint256 share = (balance * totalCollateralToTransfer) / _totalSupply;
+                claimable[better] += share;
+            }
+        }
+
+        clearBalanceAndTotalSupply();
     }
 
     function clearBalanceAndTotalSupply() internal {
         _totalSupply = 0;
 
-        // Remove all elements one by one (see https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableMap-clear-struct-EnumerableMap-AddressToBytes32Map-)
         uint256 length = _balances.length();
 
         for (uint256 i = 0; i < length; i++) {
-            // Since we're removing elements, we always look at index 0
             (address key,) = _balances.at(0);
             _balances.remove(key);
         }
-    }
-
-    function buildClaimable() public nonReentrant {
-        /**
-         * Anyone can call this to calculate the shars of each user. This can (but need not be) called multiple times, once is sufficient to distribute earnings.
-         */
-        address[] memory addresses = getAddressesWithBalanceGreaterThan0();
-
-        IERC20 erc20GroupToken = IERC20(erc20Group);
-        uint256 totalCollateralToTransfer = erc20GroupToken.balanceOf(address(this));
-
-        for (uint256 i = 0; i < addresses.length; i++) {
-            address better = addresses[i];
-            uint256 share = (balanceOf(better) * totalCollateralToTransfer) / _totalSupply;
-            claimable[better] += share;
-        }
-
-        clearBalanceAndTotalSupply();
     }
 
     function claimMany(address[] calldata users) external nonReentrant {
@@ -196,10 +169,35 @@ contract BetContract is ERC1155Holder, ReentrancyGuard {
         returns (bytes4)
     {
         // We only place bet if we received groupCRC tokens
-        if (groupCRCToken == address(uint160(id))) {
-            placeBet(value, from);
+
+        if (msg.sender == address(hub)) {
+            if (groupCRCToken == address(uint160(id))) {
+                placeBet(value, from);
+            } else if (from == address(liquidityRemover)) {
+                (address user, uint256 shares) = abi.decode(data, (address, uint256));
+                // Update the user's balance with their share of the outcome tokens
+                updateBalance(user, shares);
+                //update supply
+                _totalSupply += shares;
+            } else {
+                revert UnnaceptableTokenError({tokenAddress: address(uint160(id))});
+            }
         }
 
         return super.onERC1155Received(operator, from, id, value, data);
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] memory ids,
+        uint256[] memory values,
+        bytes memory data
+    ) public virtual override returns (bytes4) {
+        // loop through ids and values and call onERC1155Received
+        for (uint256 i = 0; i < ids.length; i++) {
+            onERC1155Received(operator, from, ids[i], values[i], data);
+        }
+        return super.onERC1155BatchReceived(operator, from, ids, values, data);
     }
 }

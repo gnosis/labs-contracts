@@ -11,5 +11,7 @@ interface IConditionalTokens {
         uint256[] calldata indexSets
     ) external;
     function reportPayouts(bytes32 questionId, uint256[] calldata payouts) external;
+    function balanceOf(address owner, uint256 id) external view returns (uint256);
+    function safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes calldata data) external;
     function prepareCondition(address oracle, bytes32 questionId, uint256 outcomeSlotCount) external;
 }

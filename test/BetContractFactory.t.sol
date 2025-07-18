@@ -4,36 +4,49 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "../src/crc_prediction_markets/BetContractFactory.sol";
 import "../src/crc_prediction_markets/BetContract.sol";
+import "../src/crc_prediction_markets/LiquidityVaultToken.sol";
 import "../src/crc_prediction_markets/IFixedProductMarketMaker.sol";
 import "../src/crc_prediction_markets/IConditionalTokens.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-//import "circles-v2/hub/Hub.sol";
-import {CirclesType} from "circles-v2/lift/IERC20Lift.sol";
+import "../test/mocks/MockFixedProductMarketMaker.sol";
+import "../test/mocks/MockHubCRCPMs.sol";
+import "../test/mocks/MockConditionalTokens.sol";
+import "../test/mocks/MockERC20.sol";
+import "../test/helpers/FPMMTestHelper.sol";
+import "forge-std/console.sol";
 
-contract BetContractFactoryTest is Test {
+contract BetContractFactoryTest is FPMMTestHelper {
     BetContractFactory factory;
-    IFixedProductMarketMaker fpmm;
-    address groupCRCToken;
-    MockHub hub;
+    MockFixedProductMarketMaker fpmm;
+
     address fpmmAddress;
     address groupTokenAddress;
     address hubAddress;
 
-    function setUp() public {
-        // Deploy mock contracts
-        fpmm = IFixedProductMarketMaker(address(new MockFixedProductMarketMaker()));
-        MockERC20 mockToken = new MockERC20("Test Token", "TEST");
-        groupCRCToken = address(mockToken);
-        hub = MockHub(address(new MockHub()));
+    LiquidityVaultToken liquidityToken;
+    LiquidityContractFactory liquidityContractFactory;
 
-        // Set addresses
-        fpmmAddress = address(fpmm);
-        groupTokenAddress = address(groupCRCToken);
+    uint256 constant TOKEN_ID = 1;
+    uint256 constant AMOUNT = 100;
+
+    bytes32[] conditionIds;
+
+    function setUp() public {
+        _setupFPMMEnvironment();
+
+        groupTokenAddress = address(group);
         hubAddress = address(hub);
 
-        // Deploy factory
-        factory = new BetContractFactory(hubAddress);
+        conditionIds = buildMockConditionIds();
+        liquidityContractFactory = new LiquidityContractFactory();
+        factory = new BetContractFactory(hubAddress, address(liquidityContractFactory));
+    }
+
+    function buildMockConditionIds() private pure returns (bytes32[] memory) {
+        bytes32[] memory _conditionIds = new bytes32[](1);
+        _conditionIds[0] = CONDITION_ID;
+        return _conditionIds;
     }
 
     function buildOutcomeIndicesArray(uint256 value) private pure returns (uint256[] memory) {
@@ -42,30 +55,31 @@ contract BetContractFactoryTest is Test {
         return outcomeIndexes;
     }
 
-    function testFactoryDeployment() public {
+    function testFactoryDeployment() public view {
         assertEq(address(factory) != address(0), true, "Factory should be deployed");
     }
 
-    function testCreateBetContractsForFpmm() public {
+    function testCreateContractsForFpmm() public {
         // Create bet contracts
         uint256[] memory outcomeIndexes = new uint256[](2);
         outcomeIndexes[0] = 0;
         outcomeIndexes[1] = 1;
 
-        // Record events
-        vm.recordLogs();
-        factory.createBetContractsForFpmm(
-            fpmmAddress, groupTokenAddress, outcomeIndexes, buildOrganizationNames(), buildOrganizationMetadataDigests()
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
-        Vm.Log[] memory entries = vm.getRecordedLogs();
-
-        // Check that we have the expected number of events
-        assertEq(entries.length, 2, "Should emit 2 BetContractDeployed events");
 
         // Get market info
-        MarketInfo memory marketInfo = factory.getMarketInfo(fpmmAddress);
+        MarketInfo memory marketInfo = factory.getMarketInfo(fpmmMarketId);
 
-        assertEq(marketInfo.fpmmAddress, fpmmAddress, "FPMM address should match");
+        assertEq(marketInfo.fpmmAddress, fpmmMarketId, "FPMM address should match");
         assertEq(marketInfo.groupCRCToken, groupTokenAddress, "Group CRC token should match");
         assertEq(marketInfo.outcomeIdxs.length, 2, "Should have 2 outcome indices");
         assertEq(marketInfo.betContracts.length, 2, "Should have 2 bet contracts");
@@ -73,26 +87,70 @@ contract BetContractFactoryTest is Test {
         // Create again to test idempotency
         outcomeIndexes = buildOutcomeIndicesArray(0);
 
-        factory.createBetContractsForFpmm(
-            fpmmAddress, groupTokenAddress, outcomeIndexes, buildOrganizationNames(), buildOrganizationMetadataDigests()
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
+    }
+
+    function testLiquidityInfo() public {
+        uint256[] memory outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = 0;
+        outcomeIndexes[1] = 1;
+
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
+        );
+
+        LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
+        assertTrue(liquidityInfo.liquidityAdder != address(0), "Liquidity adder not empty");
+        assertTrue(liquidityInfo.liquidityRemover != address(0), "Liquidity remover not empty");
+        assertTrue(liquidityInfo.liquidityVaultToken != address(0), "Liquidity vault token not empty");
     }
 
     function testCannotCreateWithZeroAddresses() public {
         // Test with zero FPMM address
+
         vm.expectRevert("Invalid FPMM address");
         uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
         bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
-        string[] memory organizationNames = buildOrganizationNames();
-        factory.createBetContractsForFpmm(
-            address(0), groupTokenAddress, outcomeIndexes, organizationNames, organizationMetadataDigests
+        string[] memory organizationNames = buildBetContractOrganizationNames();
+        factory.createContractsForFpmm(
+            address(0),
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            organizationNames,
+            organizationMetadataDigests,
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
 
         // Test with zero group CRC token address
         vm.expectRevert("Invalid group CRC token address");
 
-        factory.createBetContractsForFpmm(
-            fpmmAddress, address(0), outcomeIndexes, organizationNames, organizationMetadataDigests
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            address(0),
+            outcomeIndexes,
+            conditionIds,
+            organizationNames,
+            organizationMetadataDigests,
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
     }
 
@@ -102,27 +160,176 @@ contract BetContractFactoryTest is Test {
         outcomeIndexes[0] = 0;
         outcomeIndexes[1] = 1;
 
-        factory.createBetContractsForFpmm(
-            fpmmAddress, groupTokenAddress, outcomeIndexes, buildOrganizationNames(), buildOrganizationMetadataDigests()
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
 
         // Get market info
-        MarketInfo memory marketInfo = factory.getMarketInfo(fpmmAddress);
+        MarketInfo memory marketInfo = factory.getMarketInfo(fpmmMarketId);
 
         // Verify bet contracts
         for (uint256 i = 0; i < 2; i++) {
             BetContract betContract = BetContract(marketInfo.betContracts[i]);
-            assertEq(address(betContract.fpmm()), fpmmAddress, "FPMM address should match");
+            assertEq(address(betContract.fpmm()), fpmmMarketId, "FPMM address should match");
             assertEq(address(betContract.groupCRCToken()), groupTokenAddress, "Group CRC token should match");
             assertEq(betContract.outcomeIndex(), i, "Outcome index should match");
             assertEq(address(betContract.hub()), hubAddress, "Hub address should match");
         }
+
+        // verify liquidity info
+        LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
+        LiquidityVaultToken liquidityVaultToken = LiquidityVaultToken(liquidityInfo.liquidityVaultToken);
+        bytes32 role = liquidityVaultToken.getUpdaterRole(fpmmMarketId);
+        assertTrue(liquidityVaultToken.hasRole(role, liquidityInfo.liquidityAdder));
+        assertTrue(liquidityVaultToken.hasRole(role, liquidityInfo.liquidityRemover));
     }
 
-    function buildOrganizationNames() private pure returns (string[] memory) {
+    function testAddLiquidity() public {
+        // Create bet contracts
+        uint256[] memory outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = 0;
+        outcomeIndexes[1] = 1;
+
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
+        );
+        // verify liquidity info
+        LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
+        LiquidityAdder liquidityAdder = LiquidityAdder(liquidityInfo.liquidityAdder);
+
+        // mint CRC group tokens
+        address alice = addresses[0];
+        uint256 amount = 1 * CRC;
+        mintToGroup(group, alice, amount);
+
+        // send group CRC tokens to liquidityAdder
+        vm.prank(alice);
+        hub.safeTransferFrom(alice, address(liquidityAdder), uint256(uint160(group)), amount, "");
+        vm.stopPrank();
+
+        LiquidityVaultToken liquidityVaultToken = LiquidityVaultToken(liquidityInfo.liquidityVaultToken);
+
+        uint256 lpTokensBalance = liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
+
+        assertTrue(lpTokensBalance > 0);
+    }
+
+    function testCannotCreateContractsWhenPaused() public {
+        // Pause the factory
+        vm.prank(factory.owner());
+        factory.pause();
+
+        // Prepare test data
+        uint256[] memory outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = 0;
+        outcomeIndexes[1] = 1;
+
+        bytes32[] memory _conditionIds = new bytes32[](1);
+        _conditionIds[0] = keccak256("test-condition");
+
+        string[] memory orgNames = new string[](2);
+        orgNames[0] = "Org1";
+        orgNames[1] = "Org2";
+
+        bytes32[] memory orgMetadata = new bytes32[](2);
+        orgMetadata[0] = keccak256("metadata1");
+        orgMetadata[1] = keccak256("metadata2");
+
+        // Should revert with EnforcedPause error when trying to create contracts
+        vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            _conditionIds,
+            orgNames,
+            orgMetadata,
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
+        );
+    }
+
+    function testRemoveLiquidity() public {
+        // Create bet contracts
+        uint256[] memory outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = 0;
+        outcomeIndexes[1] = 1;
+
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
+        );
+        // verify liquidity info
+        LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
+        MarketInfo memory marketInfo = factory.getMarketInfo(fpmmMarketId);
+
+        address liquidityAdder = liquidityInfo.liquidityAdder;
+        address liquidityRemover = liquidityInfo.liquidityRemover;
+
+        // mint CRC group tokens
+        address alice = addresses[0];
+        uint256 amount = 1 * CRC;
+
+        mintToGroup(groupTokenAddress, alice, amount);
+
+        // send group CRC tokens to liquidityAdder
+        vm.prank(alice);
+
+        // first we add some lp shares
+        hub.safeTransferFrom(alice, liquidityAdder, uint256(uint160(group)), amount, "");
+
+        // then we remove the lp shares
+        mintToGroup(groupTokenAddress, alice, amount);
+        vm.prank(alice);
+        hub.safeTransferFrom(alice, liquidityRemover, uint256(uint160(group)), amount, "");
+
+        LiquidityVaultToken liquidityVaultToken = LiquidityVaultToken(liquidityInfo.liquidityVaultToken);
+        uint256 lpTokensBalance = liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
+        assertTrue(lpTokensBalance == 0);
+        console.log("after lptokens balance");
+
+        // Assert that outcome tokens were sent to BetContracts
+        MockFixedProductMarketMaker fpmmMarket = MockFixedProductMarketMaker(fpmmMarketId);
+        MockConditionalTokens conditionalTokens = MockConditionalTokens(address(fpmmMarket.conditionalTokens()));
+        uint256[] memory tokenIds = fpmmMarket.getTokenIds(address(fpmmMarket.collateralToken()));
+        for (uint256 index = 0; index < tokenIds.length; index++) {
+            BetContract betContract = BetContract(marketInfo.betContracts[index]);
+            uint256 balance = conditionalTokens.balanceOf(address(betContract), tokenIds[index]);
+            assertTrue(balance > 0, "Outcome tokens should be sent to BetContracts");
+        }
+    }
+
+    function buildBetContractOrganizationNames() private pure returns (string[] memory) {
         string[] memory organizationNames = new string[](2);
         organizationNames[0] = "Organization 1";
         organizationNames[1] = "Organization 2";
+        return organizationNames;
+    }
+
+    function buildLiquidityOrganizationNames() private pure returns (string[] memory) {
+        string[] memory organizationNames = new string[](2);
+        organizationNames[0] = "LiquidityAdder";
+        organizationNames[1] = "LiquidityRemover";
         return organizationNames;
     }
 
@@ -137,68 +344,88 @@ contract BetContractFactoryTest is Test {
         // Create bet contracts
         uint256[] memory outcomeIndexes = buildOutcomeIndicesArray(0);
         bytes32[] memory organizationMetadataDigests = buildOrganizationMetadataDigests();
-        string[] memory organizationNames = buildOrganizationNames();
-        factory.createBetContractsForFpmm(
-            fpmmAddress, groupTokenAddress, outcomeIndexes, organizationNames, organizationMetadataDigests
+        string[] memory organizationNames = buildBetContractOrganizationNames();
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            organizationNames,
+            organizationMetadataDigests,
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
 
         // Verify FPMM address is tracked
-        assertTrue(factory.fpmmAlreadyProcessed(fpmmAddress), "FPMM address should be tracked");
+        assertTrue(factory.fpmmAlreadyProcessed(fpmmMarketId), "FPMM address should be tracked");
 
         // Create another market
-        address newFpmmAddress = address(2);
+        MockFixedProductMarketMaker mockFpmm = new MockFixedProductMarketMaker(group, OUTCOME_SLOT_COUNT, CONDITION_ID);
 
         outcomeIndexes = new uint256[](2);
         outcomeIndexes[0] = uint256(0);
         outcomeIndexes[1] = uint256(1);
 
-        factory.createBetContractsForFpmm(
-            newFpmmAddress, groupTokenAddress, outcomeIndexes, organizationNames, organizationMetadataDigests
+        factory.createContractsForFpmm(
+            address(mockFpmm),
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            organizationNames,
+            organizationMetadataDigests,
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
         );
-
         // Verify both FPMM addresses are tracked
-        assertTrue(factory.fpmmAlreadyProcessed(fpmmAddress), "First FPMM address should still be tracked");
-        assertTrue(factory.fpmmAlreadyProcessed(newFpmmAddress), "Second FPMM address should be tracked");
-    }
-}
-
-// Mock contracts
-contract MockFixedProductMarketMaker {
-    IConditionalTokens public conditionalTokens;
-
-    constructor() {
-        conditionalTokens = IConditionalTokens(address(new MockConditionalTokens()));
-    }
-}
-
-contract MockConditionalTokens {
-    function redeemPositions(IERC20, bytes32, bytes32, uint256[] memory) external pure {
-        // Mock implementation
-    }
-}
-
-contract MockHub {
-    address public wrappedToken;
-
-    function wrap(address token, uint256 amount, CirclesType _type) external returns (address) {
-        require(token != address(0), "Invalid token address");
-        //require(amount > 0, "Amount must be greater than 0");
-
-        // For testing purposes, we'll just return the same token address
-        wrappedToken = token;
-        return token;
+        assertTrue(factory.fpmmAlreadyProcessed(fpmmMarketId), "First FPMM address should still be tracked");
+        assertTrue(factory.fpmmAlreadyProcessed(address(mockFpmm)), "Second FPMM address should be tracked");
     }
 
-    function trust(address _trustReceiver, uint96 _expiry) external {
-        // do nothing
-    }
+    function testIssueLPTokenInconsistency() public {
+        // Create bet contracts
+        uint256[] memory outcomeIndexes = new uint256[](2);
+        outcomeIndexes[0] = 0;
+        outcomeIndexes[1] = 1;
 
-    function registerOrganization(string memory, /*orgaName*/ bytes32 /*identifier*/ ) external {
-        // No-op for testing
-    }
-}
+        factory.createContractsForFpmm(
+            fpmmMarketId,
+            groupTokenAddress,
+            outcomeIndexes,
+            conditionIds,
+            buildBetContractOrganizationNames(),
+            buildOrganizationMetadataDigests(),
+            buildLiquidityOrganizationNames(),
+            buildOrganizationMetadataDigests()
+        );
+        // verify liquidity info
+        LiquidityInfo memory liquidityInfo = factory.getLiquidityInfo(fpmmMarketId);
+        LiquidityAdder liquidityAdder = LiquidityAdder(liquidityInfo.liquidityAdder);
 
-// mock ERC20
-contract MockERC20 {
-    constructor(string memory name, string memory symbol) {}
+        // mint CRC group tokens
+        address alice = addresses[0];
+        uint256 amount = 1 * CRC;
+        mintToGroup(group, alice, amount);
+
+        // Alice sends 1 group CRC tokens to liquidityAdder
+        vm.prank(alice);
+        hub.safeTransferFrom(alice, address(liquidityAdder), uint256(uint160(group)), amount, "");
+        vm.stopPrank();
+
+        address bob = addresses[1];
+        mintToGroup(group, bob, amount);
+        // Bob sends 1 group CRC tokens to liquidityAdder
+        vm.prank(bob);
+        hub.safeTransferFrom(bob, address(liquidityAdder), uint256(uint160(group)), amount, "");
+
+        LiquidityVaultToken liquidityVaultToken = LiquidityVaultToken(liquidityInfo.liquidityVaultToken);
+
+        uint256 lpTokensBalanceAlice =
+            liquidityVaultToken.balanceOf(alice, liquidityVaultToken.parseAddress(fpmmMarketId));
+        uint256 lpTokensBalanceBob = liquidityVaultToken.balanceOf(bob, liquidityVaultToken.parseAddress(fpmmMarketId));
+        console.log(
+            "lp Balance of Alice and Bob, after both deposited 1 CRC: ", lpTokensBalanceAlice, lpTokensBalanceBob
+        );
+        assertTrue(lpTokensBalanceAlice > 0);
+        assertTrue(lpTokensBalanceAlice == lpTokensBalanceBob);
+    }
 }

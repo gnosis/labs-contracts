@@ -15,6 +15,10 @@ Repository holding the contracts made by Gnosis Labs team.
 | Simple Treasury contract               | Contract for storing the NFT agent game treasury | [0x624ad0db52e6b18afb4d36b8e79d0c2a74f3fc8a](https://gnosisscan.io/address/0x624ad0db52e6b18afb4d36b8e79d0c2a74f3fc8a#code) |  |
 | NoSingleSignedTransactionGuard     | Safe Guard that only allows transactions with at least 2 signers. | [0x43eff50Dc1Db7c084d2488792C7df28C0c3558D5](https://gnosisscan.io/address/0x43eff50Dc1Db7c084d2488792C7df28C0c3558D5#code)   | none |
 | DebuggingContract     | Add whatever function you need here to test out | [0x5Aa82E068aE6a6a1C26c42E5a59520a74Cdb8998](https://gnosisscan.io/address/0x5Aa82E068aE6a6a1C26c42E5a59520a74Cdb8998#code)   | none |
+| LiquidityContractFactory               | Factory for liquidity contracts | [0xbb31D4Fe66731dDC6D124969515457f87B2f9404](https://gnosisscan.io/address/0xbb31D4Fe66731dDC6D124969515457f87B2f9404#code) |  |
+| Bet Contract factory               | Factory for bet contracts | [0x3a77CB96bC6893a30386B79A262970076dd0E892](https://gnosisscan.io/address/0x3a77CB96bC6893a30386B79A262970076dd0E892#code) |  |
+
+
 
 ## Set up contracts development
 
