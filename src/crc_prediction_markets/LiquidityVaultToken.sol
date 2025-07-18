@@ -53,14 +53,6 @@ contract LiquidityVaultToken is OZERC1155, AccessControl {
         _burn(from, parseAddress(marketId), amount);
     }
 
-    // Transfer tokens between users for a specific market
-    function safeTransferFromUser(address from, address to, address marketId, uint256 amount, bytes calldata data)
-        external
-        onlyRole(getUpdaterRole(marketId))
-    {
-        safeTransferFrom(from, to, parseAddress(marketId), amount, data);
-    }
-
     // Add an updater for a specific market
     function addUpdater(address account, address marketId) external onlyRole(DEFAULT_ADMIN_ROLE) {
         bytes32 role = getUpdaterRole(marketId);
